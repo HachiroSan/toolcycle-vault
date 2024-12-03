@@ -1,7 +1,7 @@
 'use client';
 
 import React, { FormEvent } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { updateRecovery } from '@/actions/auth';
 import Invalid from './Invalid';
-import { Suspense } from 'react';
 
 const passwordSchema = z
     .object({
@@ -22,11 +21,16 @@ const passwordSchema = z
         path: ['confirmPassword'],
     });
 
-const ResetPasswordPage: React.FC = () => {
+interface Props {
+    params: {
+        userId: string;
+        secret: string;
+    };
+}
+
+const ResetPasswordPage: React.FC<Props> = ({ params }) => {
     const router = useRouter();
-    const searchParams = useSearchParams();
-    const userId = searchParams?.get('userId');
-    const secret = searchParams?.get('secret');
+    const { userId, secret } = params;
 
     if (!userId || !secret) {
         return (
@@ -49,60 +53,59 @@ const ResetPasswordPage: React.FC = () => {
 
             await toast.promise(updateRecovery(userId, secret, data.password), {
                 loading: 'Resetting password...',
-                success: (result) => {
-                    setTimeout(() => router.push('/login'), 2000);
-                    return result.message || 'Password reset successfully';
+                success: () => {
+                    router.push('/sign-in');
+                    return 'Password reset successfully!';
                 },
-                error: (err: Error) => err.message || 'Failed to reset password',
+                error: 'Failed to reset password.',
             });
-        } catch (err) {
-            if (err instanceof z.ZodError) {
-                toast.error(err.errors[0]?.message || 'Validation error');
+        } catch (error) {
+            if (error instanceof z.ZodError) {
+                error.errors.forEach((err) => {
+                    toast.error(err.message);
+                });
+            } else {
+                toast.error('An unexpected error occurred.');
             }
         }
     };
 
     return (
-        <Suspense fallback={<div>Loading...</div>}>
-            <div className="flex h-screen w-screen items-center justify-center">
-                <Card className="w-full max-w-lg mx-auto">
-                    <CardHeader className="space-y-1 p-6">
-                        <CardTitle className="text-2xl text-center">Reset Password</CardTitle>
-                        <CardDescription className="text-center">Enter your new password below</CardDescription>
-                    </CardHeader>
-                    <form onSubmit={handleSubmit}>
-                        <CardContent className="space-y-4 p-6">
-                            <div className="space-y-2">
-                                <Label htmlFor="password">New Password</Label>
-                                <Input
-                                    id="password"
-                                    name="password"
-                                    type="password"
-                                    placeholder="Enter your new password"
-                                    required
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="confirmPassword">Confirm Password</Label>
-                                <Input
-                                    id="confirmPassword"
-                                    name="confirmPassword"
-                                    type="password"
-                                    placeholder="Confirm your new password"
-                                    required
-                                />
-                            </div>
-                            <p className="text-sm text-muted-foreground">
-                                Password must be at least 8 characters long.
-                            </p>
-                            <Button type="submit" className="w-full">
-                                Reset Password
-                            </Button>
-                        </CardContent>
+        <div className="flex h-screen w-screen items-center justify-center">
+            <Card className="w-[380px]">
+                <CardHeader>
+                    <CardTitle>Reset Password</CardTitle>
+                    <CardDescription>Enter your new password below.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="password">New Password</Label>
+                            <Input
+                                id="password"
+                                name="password"
+                                type="password"
+                                required
+                                placeholder="Enter your new password"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="confirmPassword">Confirm Password</Label>
+                            <Input
+                                id="confirmPassword"
+                                name="confirmPassword"
+                                type="password"
+                                required
+                                placeholder="Confirm your new password"
+                            />
+                        </div>
+                        <Button type="submit" className="w-full">
+                            Reset Password
+                        </Button>
                     </form>
-                </Card>
-            </div>
-        </Suspense>
+                </CardContent>
+            </Card>
+        </div>
     );
 };
 
