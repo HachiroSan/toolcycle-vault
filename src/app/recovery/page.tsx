@@ -1,6 +1,6 @@
 'use client';
 
-import React, { FormEvent, Suspense } from 'react';
+import React, { FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { z } from 'zod';
 import { toast } from 'sonner';
@@ -10,14 +10,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { updateRecovery } from '@/actions/auth';
 import Invalid from './Invalid';
-
-function LoadingState() {
-    return (
-        <div className="flex h-screen w-screen items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
-        </div>
-    );
-}
 
 const passwordSchema = z
     .object({
@@ -75,48 +67,40 @@ export default function ResetPasswordPage() {
     };
 
     return (
-        <Suspense fallback={<LoadingState />}>
-            {!userId || !secret ? (
-                <div className="flex h-screen w-screen items-center justify-center">
-                    <Invalid />
-                </div>
-            ) : (
-                <div className="flex h-screen w-screen items-center justify-center">
-                    <Card className="w-[380px]">
-                        <CardHeader>
-                            <CardTitle>Reset Password</CardTitle>
-                            <CardDescription>Enter your new password below.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <form onSubmit={handleSubmit} className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="password">New Password</Label>
-                                    <Input
-                                        id="password"
-                                        name="password"
-                                        type="password"
-                                        required
-                                        placeholder="Enter your new password"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="confirmPassword">Confirm Password</Label>
-                                    <Input
-                                        id="confirmPassword"
-                                        name="confirmPassword"
-                                        type="password"
-                                        required
-                                        placeholder="Confirm your new password"
-                                    />
-                                </div>
-                                <Button type="submit" className="w-full">
-                                    Reset Password
-                                </Button>
-                            </form>
-                        </CardContent>
-                    </Card>
-                </div>
-            )}
-        </Suspense>
+        <div className="flex h-screen w-screen items-center justify-center">
+            <Card className="w-[380px]">
+                <CardHeader>
+                    <CardTitle>Reset Password</CardTitle>
+                    <CardDescription>Enter your new password below.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="password">New Password</Label>
+                            <Input
+                                id="password"
+                                name="password"
+                                type="password"
+                                required
+                                placeholder="Enter your new password"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="confirmPassword">Confirm Password</Label>
+                            <Input
+                                id="confirmPassword"
+                                name="confirmPassword"
+                                type="password"
+                                required
+                                placeholder="Confirm your new password"
+                            />
+                        </div>
+                        <Button type="submit" className="w-full">
+                            Reset Password
+                        </Button>
+                    </form>
+                </CardContent>
+            </Card>
+        </div>
     );
 }

@@ -4,6 +4,16 @@ import '@/assets/globals.css';
 import { Toaster } from 'sonner';
 import { ContextProvider } from '@/context/wrapper';
 import Navbar from '@/components/layout/Navbar';
+import { Suspense } from 'react';
+
+// Add loading component
+function LoadingState() {
+    return (
+        <div className="flex h-screen w-screen items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+        </div>
+    );
+}
 
 const geistSans = localFont({
     src: '../assets/fonts/GeistVF.woff',
@@ -30,13 +40,15 @@ export default function RootLayout({
     return (
         <html lang="en" suppressHydrationWarning>
             <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-                <ContextProvider>
-                    <Toaster richColors position="bottom-right" />
-                    <main className="pt-[65px]">
-                        <Navbar />
-                        {children}
-                    </main>
-                </ContextProvider>
+                <Suspense fallback={<LoadingState />}>
+                    <ContextProvider>
+                        <Toaster richColors position="bottom-right" />
+                        <main className="pt-[65px]">
+                            <Navbar />
+                            {children}
+                        </main>
+                    </ContextProvider>
+                </Suspense>
             </body>
         </html>
     );
