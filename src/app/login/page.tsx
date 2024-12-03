@@ -8,7 +8,7 @@ import SignupForm from './form/Signup';
 import ForgotPassword from './form/Forgot';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-export const LoginPage = () => {
+export default function LoginPage() {
     const [activeTab, setActiveTab] = useState('login');
 
     const tabContent = {
@@ -80,6 +80,4 @@ export const LoginPage = () => {
             </main>
         </div>
     );
-};
-
-export default LoginPage;
+}
