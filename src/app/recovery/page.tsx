@@ -21,14 +21,15 @@ const passwordSchema = z
         path: ['confirmPassword'],
     });
 
-interface Props {
+type Props = {
     params: {
         userId: string;
         secret: string;
     };
-}
+    searchParams: { [key: string]: string | string[] | undefined };
+};
 
-const ResetPasswordPage: React.FC<Props> = ({ params }) => {
+const ResetPasswordPage = ({ params }: Props) => {
     const router = useRouter();
     const { userId, secret } = params;
 
