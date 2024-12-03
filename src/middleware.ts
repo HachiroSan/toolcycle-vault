@@ -12,7 +12,7 @@ const PROTECTED_ROUTES = ['/profile', '/profile/', '/admin', '/admin/', '/return
 
 export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
-    const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
+    const isPublicRoute = PUBLIC_ROUTES.some((route) => pathname.startsWith(route));
     const isProtectedRoute = PROTECTED_ROUTES.some((route) => pathname.startsWith(route));
     const response = NextResponse.next();
 
@@ -52,6 +52,7 @@ export const config = {
     matcher: [
         '/',
         '/login',
+        '/recovery',
         '/profile',
         '/return',
         '/return/:path*', // Add support for dynamic return routes
