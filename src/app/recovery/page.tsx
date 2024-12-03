@@ -63,13 +63,13 @@ const ResetPasswordPage: React.FC = () => {
     };
 
     return (
-        <Suspense fallback={<div>Loading...</div>}>
-            <div className="flex h-screen w-screen items-center justify-center">
-                <Card className="w-full max-w-lg mx-auto">
-                    <CardHeader className="space-y-1 p-6">
-                        <CardTitle className="text-2xl text-center">Reset Password</CardTitle>
-                        <CardDescription className="text-center">Enter your new password below</CardDescription>
-                    </CardHeader>
+        <div className="flex h-screen w-screen items-center justify-center">
+            <Card className="w-full max-w-lg mx-auto">
+                <CardHeader className="space-y-1 p-6">
+                    <CardTitle className="text-2xl text-center">Reset Password</CardTitle>
+                    <CardDescription className="text-center">Enter your new password below</CardDescription>
+                </CardHeader>
+                <Suspense fallback={<div>Loading...</div>}>
                     <form onSubmit={handleSubmit}>
                         <CardContent className="space-y-4 p-6">
                             <div className="space-y-2">
@@ -100,9 +100,9 @@ const ResetPasswordPage: React.FC = () => {
                             </Button>
                         </CardContent>
                     </form>
-                </Card>
-            </div>
-        </Suspense>
+                </Suspense>
+            </Card>
+        </div>
     );
 };
 
