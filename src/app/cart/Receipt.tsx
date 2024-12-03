@@ -6,6 +6,8 @@ import { BorrowReceipt } from '@/data/borrow.type';
 import { useUser } from '@/hooks/useUser';
 import { BaseItem } from '@/data/inventory.type';
 import { CheckoutSuccess } from './CheckoutSuccess';
+import { toast } from 'sonner';
+import { AlertTriangle } from 'lucide-react';
 
 interface ReceiptProps {
     data: BorrowReceipt;
@@ -17,7 +19,38 @@ export function Receipt({ data, items }: ReceiptProps) {
     const [showAnimation, setShowAnimation] = useState(true);
     const totalItems = data.item_quantities.reduce((sum, quantity) => sum + quantity, 0);
 
-    console.log(items);
+    useEffect(() => {
+        const warningTimer = setTimeout(() => {
+            toast(
+                <div className="space-y-2">
+                    <h3 className="font-medium text-amber-900">Borrowing Guidelines</h3>
+                    <ul className="text-sm space-y-1.5 text-amber-800">
+                        <li>• Please handle all items with care</li>
+                        <li>• Return items in their original condition</li>
+                        <li>
+                            • Return by{' '}
+                            {new Date(data.dueDate).toLocaleDateString('en-US', {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                            })}
+                        </li>
+                        <li>• Report any damage immediately</li>
+                    </ul>
+                </div>,
+                {
+                    duration: 8000,
+                    icon: <AlertTriangle className="h-5 w-5 text-amber-500" />,
+                    className: 'bg-amber-50 border-amber-200',
+                    position: 'top-center',
+                }
+            );
+        }, 3500); // Show after success animation
+
+        return () => clearTimeout(warningTimer);
+    }, [data.dueDate]);
+
     useEffect(() => {
         const timer = setTimeout(() => {
             setShowAnimation(false);

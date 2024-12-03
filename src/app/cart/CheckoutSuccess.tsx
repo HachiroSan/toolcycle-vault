@@ -32,8 +32,8 @@ export function CheckoutSuccess() {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.4 }}
             >
-                <h2 className="text-2xl font-bold text-green-500">Checkout Successful!</h2>
-                <p className="text-muted-foreground">Your tools have been checked out successfully.</p>
+                <h2 className="text-2xl font-bold text-green-500">Borrowing Successful!</h2>
+                <p className="text-muted-foreground">You have successfully borrowed the items.</p>
             </motion.div>
 
             <motion.div

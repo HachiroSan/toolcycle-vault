@@ -3,16 +3,7 @@
 import { cookies } from 'next/headers';
 import { ID, Query, Databases, Account } from 'node-appwrite';
 import { createSessionClient } from '@/lib/appwrite/config';
-import {
-    CreateBorrowRequest,
-    ReturnBorrowRequest,
-    ServiceResponse,
-    InventoryUpdate,
-    BorrowUpdate,
-    InventoryDocument,
-    BorrowReceipt,
-    BorrowItem,
-} from '@/data/borrow.type';
+import { CreateBorrowRequest, ServiceResponse, InventoryUpdate, BorrowReceipt, BorrowItem } from '@/data/borrow.type';
 
 // Helper function to handle unauthorized cases
 function handleUnauthorized<T>(): ServiceResponse<T> {
@@ -74,11 +65,12 @@ export async function borrowItems(request: CreateBorrowRequest): Promise<Service
         const borrowItemsCollectionId = process.env.NEXT_PUBLIC_APPWRITE_BORROW_ITEMS_COLLECTION_ID!;
         const inventoryCollectionId = process.env.NEXT_PUBLIC_APPWRITE_INVENTORY_COLLECTION_ID!;
 
-        // Create receipt first
+        // Create receipt with returned_quantities initialized to 0s
         createdReceipt = await databases.createDocument<BorrowReceipt>(databaseId, receiptsCollectionId, receiptId, {
             userId: requestUser.$id,
             item_ids: request.item_ids,
             item_quantities: request.item_quantities,
+            returned_quantities: request.item_ids.map(() => 0), // Initialize returned quantities
             dueDate: request.dueDate,
             returnDate: null,
             notes: request.notes ?? null,
@@ -92,7 +84,7 @@ export async function borrowItems(request: CreateBorrowRequest): Promise<Service
             const itemId = request.item_ids[i];
             const quantity = request.item_quantities[i];
 
-            // Create borrow item record
+            // Create borrow item with returned_quantity initialized to 0
             const borrowItem = await databases.createDocument<BorrowItem>(
                 databaseId,
                 borrowItemsCollectionId,
@@ -102,12 +94,13 @@ export async function borrowItems(request: CreateBorrowRequest): Promise<Service
                     userId: requestUser.$id,
                     itemId: itemId,
                     quantity: quantity,
+                    returned_quantity: 0, // Initialize returned quantity
                     status: 'active',
                 }
             );
             createdBorrowItems.push(borrowItem);
 
-            // Update inventory
+            // Rest of inventory update logic remains the same
             const inventoryList = await databases.listDocuments(databaseId, inventoryCollectionId, [
                 Query.equal('itemId', itemId),
             ]);
@@ -144,7 +137,7 @@ export async function borrowItems(request: CreateBorrowRequest): Promise<Service
             data: createdReceipt,
         };
     } catch (error) {
-        // Rollback everything if something fails
+        // Rollback logic remains the same since new fields don't need special handling
         if (createdReceipt) {
             await databases.deleteDocument(
                 process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!,
@@ -165,121 +158,6 @@ export async function borrowItems(request: CreateBorrowRequest): Promise<Service
                 databases.updateDocument(
                     process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!,
                     process.env.NEXT_PUBLIC_APPWRITE_INVENTORY_COLLECTION_ID!,
-                    update.inventoryId,
-                    update.previousData
-                )
-            ),
-        ]);
-
-        return handleError(error);
-    }
-}
-
-// Return borrowed items
-export async function returnItems(request: ReturnBorrowRequest[]): Promise<ServiceResponse<BorrowUpdate[]>> {
-    const client = await getSessionDatabases();
-    if (!client) return handleUnauthorized();
-
-    const { databases } = client;
-    const updatedBorrows: BorrowUpdate[] = [];
-    const updatedInventories: InventoryUpdate[] = [];
-    const databaseId = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
-    const borrowItemsCollectionId = process.env.NEXT_PUBLIC_APPWRITE_BORROW_ITEMS_COLLECTION_ID!;
-    const inventoryCollectionId = process.env.NEXT_PUBLIC_APPWRITE_INVENTORY_COLLECTION_ID!;
-    const receiptsCollectionId = process.env.NEXT_PUBLIC_APPWRITE_BORROW_RECEIPTS_COLLECTION_ID!;
-
-    try {
-        for (const item of request) {
-            const currentDate = new Date().toISOString();
-
-            // Update borrow item status and return date
-            const previousBorrow = await databases.getDocument<BorrowItem>(
-                databaseId,
-                borrowItemsCollectionId,
-                item.borrowId
-            );
-
-            await databases.updateDocument<BorrowItem>(databaseId, borrowItemsCollectionId, item.borrowId, {
-                status: 'returned',
-                returnedAt: currentDate, // Add return date for individual item
-            });
-
-            // Update inventory quantities
-            const inventoryList = await databases.listDocuments<InventoryDocument>(databaseId, inventoryCollectionId, [
-                Query.equal('itemId', previousBorrow.itemId),
-            ]);
-
-            const [inventory] = inventoryList.documents;
-            if (!inventory) {
-                throw new Error(`Inventory item with itemId ${previousBorrow.itemId} not found`);
-            }
-
-            const newTotalBorrowed = inventory.total_borrowed - item.quantity;
-            const newAvailableQuantity = inventory.available_quantity + item.quantity;
-
-            await databases.updateDocument<InventoryDocument>(databaseId, inventoryCollectionId, inventory.$id, {
-                total_borrowed: newTotalBorrowed,
-                available_quantity: newAvailableQuantity,
-            });
-
-            // Store updates for potential rollback
-            updatedBorrows.push({
-                borrowId: item.borrowId,
-                previousData: {
-                    status: previousBorrow.status as 'active' | 'returned',
-                    returnedAt: previousBorrow.returnedAt ?? null,
-                },
-            });
-
-            updatedInventories.push({
-                inventoryId: inventory.$id,
-                previousData: {
-                    total_borrowed: inventory.total_borrowed,
-                    available_quantity: inventory.available_quantity,
-                },
-            });
-
-            // Check if all items in the receipt are returned
-            const receiptItems = await databases.listDocuments<BorrowItem>(databaseId, borrowItemsCollectionId, [
-                Query.equal('receiptId', previousBorrow.receiptId),
-            ]);
-
-            const allItemsReturned = receiptItems.documents.every((item) => item.status === 'returned');
-
-            if (allItemsReturned) {
-                // Update receipt status and return date
-                await databases.updateDocument<BorrowReceipt>(
-                    databaseId,
-                    receiptsCollectionId,
-                    previousBorrow.receiptId,
-                    {
-                        status: 'returned',
-                        returnDate: currentDate,
-                    }
-                );
-            }
-        }
-
-        return {
-            success: true,
-            message: 'Items returned successfully',
-            data: updatedBorrows,
-        };
-    } catch (error) {
-        // Rollback all changes if anything fails
-        await Promise.all([
-            ...updatedBorrows.map((update) =>
-                databases.updateDocument<BorrowItem>(
-                    databaseId,
-                    borrowItemsCollectionId,
-                    update.borrowId,
-                    update.previousData
-                )
-            ),
-            ...updatedInventories.map((update) =>
-                databases.updateDocument<InventoryDocument>(
-                    databaseId,
-                    inventoryCollectionId,
                     update.inventoryId,
                     update.previousData
                 )

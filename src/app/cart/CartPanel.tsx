@@ -119,6 +119,18 @@ export default function CartPanel() {
                     <Card>
                         <CardHeader>
                             <CardTitle>Cart Items ({state.items.length})</CardTitle>
+                            {state.items.length > 0 && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                        clearCart();
+                                        toast.success('Cart cleared');
+                                    }}
+                                >
+                                    Clear Cart
+                                </Button>
+                            )}
                         </CardHeader>
                         <CardContent className="divide-y">
                             <AnimatePresence>
@@ -183,10 +195,11 @@ export default function CartPanel() {
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-sm font-medium">Due Date</label>
+                                    <label className="text-sm font-medium">Return Date</label>
                                     <Input
                                         type="date"
                                         value={sharedDetails.dueDate}
+                                        min={new Date().toISOString().split('T')[0]}
                                         onChange={(e) =>
                                             setSharedDetails({ ...sharedDetails, dueDate: e.target.value })
                                         }

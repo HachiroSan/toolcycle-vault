@@ -9,7 +9,7 @@ export interface CreateBorrowRequest {
     notes?: string;
 }
 export interface ReturnBorrowRequest {
-    borrowId: string;
+    itemId: string;
     quantity: number;
 }
 
@@ -32,6 +32,8 @@ export interface BorrowUpdate {
     previousData: {
         status: 'active' | 'returned';
         returnedAt: string | null;
+        quantity: number;
+        returned_quantity: number;
     };
 }
 

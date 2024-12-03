@@ -212,21 +212,17 @@ export async function getItemsWithInventory(params?: GetItemsParams): Promise<Pa
 }
 
 export async function createItem(request: CreateItemRequest): Promise<Response<ItemWithInventory>> {
-    console.log('Starting createItem with request:', request);
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get('session');
 
     if (!sessionCookie) {
-        console.log('No session cookie found');
         return { success: false, message: 'No session cookie found' };
     }
 
     try {
-        console.log('Creating session client...');
         const { databases } = await createSessionClient(sessionCookie.value);
         const itemId = ID.unique();
 
-        console.log('Creating item document with ID:', itemId);
         const item = await databases.createDocument<BaseItem>(
             process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!,
             process.env.NEXT_PUBLIC_APPWRITE_ITEMS_COLLECTION_ID!,
@@ -242,10 +238,8 @@ export async function createItem(request: CreateItemRequest): Promise<Response<I
                 description: request.description,
             }
         );
-        console.log('Item document created:', item);
 
         const inventoryId = ID.unique();
-        console.log('Creating inventory document with ID:', inventoryId);
         const inventory = await databases.createDocument<InventoryDocument>(
             process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!,
             process.env.NEXT_PUBLIC_APPWRITE_INVENTORY_COLLECTION_ID!,
@@ -257,7 +251,6 @@ export async function createItem(request: CreateItemRequest): Promise<Response<I
                 available_quantity: request.total_quantity - (request.total_borrowed || 0),
             }
         );
-        console.log('Inventory document created:', inventory);
 
         const itemWithInventory: ItemWithInventory = {
             ...item,
@@ -267,7 +260,6 @@ export async function createItem(request: CreateItemRequest): Promise<Response<I
                 available_quantity: inventory.available_quantity,
             },
         };
-        console.log('Final itemWithInventory object:', itemWithInventory);
 
         return {
             success: true,
@@ -275,7 +267,6 @@ export async function createItem(request: CreateItemRequest): Promise<Response<I
             data: itemWithInventory,
         };
     } catch (error) {
-        console.error('Error in createItem:', error);
         return {
             success: false,
             message: error instanceof Error ? error.message : 'Failed to create item',

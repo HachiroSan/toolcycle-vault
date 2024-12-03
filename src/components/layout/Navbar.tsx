@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { ShoppingCart, User, Shield, Menu, Hexagon, Package, ChevronDown, ClipboardCopy } from 'lucide-react';
+import { ShoppingCart, User, Shield, Menu, Hexagon, Package, ChevronDown, ClipboardCopy, Layout } from 'lucide-react';
 import { useCart } from '@/hooks/useCart';
 import { Button } from '@/components/ui/button';
 import {
@@ -40,11 +40,6 @@ export default function Navbar() {
     const [cartItemCount, setCartItemCount] = useState(0);
     const [scrolled, setScrolled] = useState(false);
 
-    // Don't render navbar on invalid paths
-    if (!validPaths.includes(pathname)) {
-        return null;
-    }
-
     useEffect(() => {
         setCartItemCount(cartState.items.length);
         const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -52,9 +47,16 @@ export default function Navbar() {
         return () => window.removeEventListener('scroll', handleScroll);
     }, [cartState.items]);
 
+    // Move conditional return after hooks
+    const isInvalidPath = !validPaths.includes(pathname) || pathname.startsWith('/return/');
+    if (isInvalidPath) {
+        return null;
+    }
+
     const isAdmin = true;
 
     const navItems = [
+        // { name: 'Dashboard', href: '/', icon: Layout },
         { name: 'Return', href: '/return', icon: ClipboardCopy },
         { name: 'Inventory', href: '/inventory', icon: Package },
         { name: 'Profile', href: '/profile', icon: User },
@@ -90,9 +92,9 @@ export default function Navbar() {
                     <div className="flex items-center justify-between h-16">
                         <Link href="/" className="flex items-center gap-2 group">
                             <Hexagon className="h-7 w-7 text-primary transition-all duration-500 group-hover:rotate-180" />
-                            <span className="font-bold text-xl bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                                NEXUS
-                            </span>
+                            {/* <span className="tracking-widest font-custom text-xl from-primary via-primary/80 to-primary/60 bg-clip-text ">
+                                TOOLCYCLE VAULT
+                            </span> */}
                         </Link>
 
                         {/* Desktop Navigation */}
