@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+
+import { Role } from '@/components/shared/RoleBadge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -112,7 +114,7 @@ export default function ProfilePanel() {
                         </div>
                         <div className="text-center space-y-2">
                             <h2 className="text-2xl font-bold">{user?.name}</h2>
-                            <RoleBadge role={user?.labels[0]} />
+                            <RoleBadge role={user?.labels[0] as Role} />
                         </div>
                         <Button onClick={handleLogout} variant="outline" className="w-full mt-auto">
                             Sign Out
