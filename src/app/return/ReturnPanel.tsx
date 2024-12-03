@@ -185,7 +185,7 @@ export default function ReturnPanel() {
                 receipt={selectedReceipt}
                 items={receiptItems}
                 onClose={() => setSelectedReceipt(null)}
-                loading={selectedReceipt && receiptItems.length === 0}
+                loading={!!selectedReceipt && receiptItems.length === 0}
             />
         </div>
     );
