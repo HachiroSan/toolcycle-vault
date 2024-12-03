@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label';
 import { updateRecovery } from '@/actions/auth';
 import Invalid from './Invalid';
+import { Suspense } from 'react';
 
 const passwordSchema = z
     .object({
@@ -62,42 +63,46 @@ const ResetPasswordPage: React.FC = () => {
     };
 
     return (
-        <div className="flex h-screen w-screen items-center justify-center">
-            <Card className="w-full max-w-lg mx-auto">
-                <CardHeader className="space-y-1 p-6">
-                    <CardTitle className="text-2xl text-center">Reset Password</CardTitle>
-                    <CardDescription className="text-center">Enter your new password below</CardDescription>
-                </CardHeader>
-                <form onSubmit={handleSubmit}>
-                    <CardContent className="space-y-4 p-6">
-                        <div className="space-y-2">
-                            <Label htmlFor="password">New Password</Label>
-                            <Input
-                                id="password"
-                                name="password"
-                                type="password"
-                                placeholder="Enter your new password"
-                                required
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="confirmPassword">Confirm Password</Label>
-                            <Input
-                                id="confirmPassword"
-                                name="confirmPassword"
-                                type="password"
-                                placeholder="Confirm your new password"
-                                required
-                            />
-                        </div>
-                        <p className="text-sm text-muted-foreground">Password must be at least 8 characters long.</p>
-                        <Button type="submit" className="w-full">
-                            Reset Password
-                        </Button>
-                    </CardContent>
-                </form>
-            </Card>
-        </div>
+        <Suspense fallback={<div>Loading...</div>}>
+            <div className="flex h-screen w-screen items-center justify-center">
+                <Card className="w-full max-w-lg mx-auto">
+                    <CardHeader className="space-y-1 p-6">
+                        <CardTitle className="text-2xl text-center">Reset Password</CardTitle>
+                        <CardDescription className="text-center">Enter your new password below</CardDescription>
+                    </CardHeader>
+                    <form onSubmit={handleSubmit}>
+                        <CardContent className="space-y-4 p-6">
+                            <div className="space-y-2">
+                                <Label htmlFor="password">New Password</Label>
+                                <Input
+                                    id="password"
+                                    name="password"
+                                    type="password"
+                                    placeholder="Enter your new password"
+                                    required
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                                <Input
+                                    id="confirmPassword"
+                                    name="confirmPassword"
+                                    type="password"
+                                    placeholder="Confirm your new password"
+                                    required
+                                />
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                                Password must be at least 8 characters long.
+                            </p>
+                            <Button type="submit" className="w-full">
+                                Reset Password
+                            </Button>
+                        </CardContent>
+                    </form>
+                </Card>
+            </div>
+        </Suspense>
     );
 };
 
