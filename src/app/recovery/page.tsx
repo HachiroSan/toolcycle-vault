@@ -21,15 +21,14 @@ const passwordSchema = z
         path: ['confirmPassword'],
     });
 
-type Props = {
+interface PageProps {
     params: {
         userId: string;
         secret: string;
     };
-    searchParams: { [key: string]: string | string[] | undefined };
-};
+}
 
-const ResetPasswordPage = ({ params }: Props) => {
+export default function ResetPasswordPage({ params }: PageProps) {
     const router = useRouter();
     const { userId, secret } = params;
 
@@ -48,7 +47,6 @@ const ResetPasswordPage = ({ params }: Props) => {
             password: formData.get('password') as string,
             confirmPassword: formData.get('confirmPassword') as string,
         };
-
         try {
             passwordSchema.parse(data);
 
@@ -108,6 +106,4 @@ const ResetPasswordPage = ({ params }: Props) => {
             </Card>
         </div>
     );
-};
-
-export default ResetPasswordPage;
+}
