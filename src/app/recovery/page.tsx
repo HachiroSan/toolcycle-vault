@@ -1,7 +1,7 @@
 'use client';
 
 import React, { FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -21,16 +21,12 @@ const passwordSchema = z
         path: ['confirmPassword'],
     });
 
-interface PageProps {
-    params: {
-        userId: string;
-        secret: string;
-    };
-}
-
-export default function ResetPasswordPage({ params }: PageProps) {
+export default function ResetPasswordPage() {
     const router = useRouter();
-    const { userId, secret } = params;
+    const searchParams = useSearchParams();
+
+    const userId = searchParams.get('userId');
+    const secret = searchParams.get('secret');
 
     if (!userId || !secret) {
         return (
@@ -47,6 +43,7 @@ export default function ResetPasswordPage({ params }: PageProps) {
             password: formData.get('password') as string,
             confirmPassword: formData.get('confirmPassword') as string,
         };
+
         try {
             passwordSchema.parse(data);
 
