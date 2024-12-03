@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { ShoppingCart, User, Shield, Menu, Hexagon, Package, ChevronDown, ClipboardCopy, Layout } from 'lucide-react';
+import { ShoppingCart, User, Shield, Menu, Hexagon, Package, ChevronDown, ClipboardCopy } from 'lucide-react';
 import { useCart } from '@/hooks/useCart';
 import { Button } from '@/components/ui/button';
 import {
