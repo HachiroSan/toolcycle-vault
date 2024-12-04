@@ -4,6 +4,7 @@ import cookies from '@/cookies';
 import { createAdminClient, createSessionClient, createPublicClient } from '@/lib/appwrite/config';
 import { Response, UserResponse } from '@/data/response.type';
 import { ID } from 'node-appwrite';
+import { redirect } from 'next/navigation';
 
 /**
  * Retrieves the user information based on the session cookie.
@@ -87,6 +88,7 @@ export async function deleteSession() {
     const { account } = await createSessionClient(sessionCookie?.value);
     await account.deleteSession('current');
     cookieStore.delete('session');
+    redirect('/login');
 }
 
 /**
