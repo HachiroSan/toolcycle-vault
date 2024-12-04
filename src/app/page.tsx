@@ -1,12 +1,4 @@
-'use client';
-
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-
-export default function ProfilePage() {
-    const router = useRouter();
-
-    useEffect(() => {
-        router.push('/inventory');
-    }, [router]);
+export default function HomePage() {
+    // Server-side redirect
+    return null;
 }

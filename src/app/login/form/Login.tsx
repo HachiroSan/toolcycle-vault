@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 // import auth from "@/auth";
 import { Response } from '@/data/response.type';
 import { toast } from 'sonner';
-import { createSession, updatePrefs } from '@/actions/auth';
+import { createSession } from '@/actions/auth';
 import { useRouter } from 'next/navigation';
 
 const formSchema = z.object({
@@ -30,7 +30,6 @@ const LoginForm = () => {
             loading: 'Signing in...',
             success: async (response: Response) => {
                 if (response.success) {
-                    await updatePrefs({ last_login: new Date().toISOString() });
                     form.reset();
                     router.push('/login');
                     return 'Signed in successfully!';

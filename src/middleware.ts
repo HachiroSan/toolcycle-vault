@@ -8,7 +8,7 @@ const ROLE_PROTECTED_ROUTES = {
 };
 
 const PUBLIC_ROUTES = ['/login', '/recovery'];
-const PROTECTED_ROUTES = ['/profile', '/profile/', '/admin', '/admin/', '/return', '/return/'];
+const PROTECTED_ROUTES = ['/profile', '/profile/', '/admin', '/admin/', '/return', '/return/', '/inventory'];
 
 export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
@@ -22,7 +22,7 @@ export async function middleware(request: NextRequest) {
 
         if (isAuthenticated) {
             if (isPublicRoute) {
-                return NextResponse.redirect(new URL('/', request.url));
+                return NextResponse.redirect(new URL('/inventory', request.url));
             }
 
             const userRole = userResponse.data!.labels[0]; // labels[0] is the user's role.
@@ -30,7 +30,7 @@ export async function middleware(request: NextRequest) {
             // Handle role-based route protection
             for (const [route, allowedRoles] of Object.entries(ROLE_PROTECTED_ROUTES)) {
                 if (pathname.startsWith(route) && !allowedRoles.includes(userRole)) {
-                    return NextResponse.redirect(new URL('/', request.url));
+                    return NextResponse.redirect(new URL('/inventory', request.url));
                 }
             }
             return response;

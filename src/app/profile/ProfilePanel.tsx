@@ -27,7 +27,6 @@ import ChangePhoneForm from './form/PhoneForm';
 import { useUser } from '@/hooks/useUser';
 import { deleteSession } from '@/actions/auth';
 import { toast } from 'sonner';
-import { useRouter } from 'next/navigation';
 import { formatDateTime } from '@/lib/utils';
 
 const InfoItem = ({
@@ -76,17 +75,19 @@ const SecurityAction = ({
 );
 
 export default function ProfilePanel() {
-    const router = useRouter();
     const [activeTab, setActiveTab] = useState('info');
     const { user, refresh } = useUser();
 
     const handleLogout = async () => {
-        toast.promise(deleteSession(), {
-            loading: 'Signing out...',
-            success: 'Successfully signed out',
-            error: 'Failed to sign out',
-        });
-        router.push('/login');
+        try {
+            toast.loading('Signing out...');
+            await deleteSession();
+        } catch {
+            // console.error('Logout error:', error);
+        } finally {
+            toast.dismiss();
+            toast.success('Successfully signed out');
+        }
     };
 
     const mainTabs = [
