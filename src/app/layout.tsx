@@ -43,10 +43,8 @@ export default function RootLayout({
                 <Suspense fallback={<LoadingState />}>
                     <ContextProvider>
                         <Toaster richColors position="bottom-right" />
-                        <main className="pt-[65px]">
-                            <Navbar />
-                            {children}
-                        </main>
+                        <Navbar />
+                        {children}
                     </ContextProvider>
                 </Suspense>
             </body>

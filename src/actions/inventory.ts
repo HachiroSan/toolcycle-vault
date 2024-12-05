@@ -104,6 +104,7 @@ type SortDirection = 'asc' | 'desc';
 interface GetItemsParams {
     page?: number;
     limit?: number;
+    type?: string;
     search?: string;
     sortBy?: string;
     sortDirection?: SortDirection;
@@ -116,6 +117,7 @@ export async function getItemsWithInventory(params?: GetItemsParams): Promise<Pa
     const page = params?.page || 1;
     const limit = params?.limit || 10;
     const search = params?.search || '';
+    const type = params?.type || '';
     const sortBy = params?.sortBy || 'name';
     const sortDirection = params?.sortDirection || 'asc';
     const status = params?.status || 'active'; // default to active items
@@ -144,6 +146,10 @@ export async function getItemsWithInventory(params?: GetItemsParams): Promise<Pa
 
         if (search) {
             queries.push(Query.search('name', search));
+        }
+
+        if (type) {
+            queries.push(Query.equal('type', type));
         }
 
         // Handle dynamic sorting

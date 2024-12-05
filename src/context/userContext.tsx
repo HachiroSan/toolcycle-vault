@@ -9,6 +9,7 @@ interface UserContextType {
     setUser: (user: User | null) => void;
     isLoading: boolean;
     refresh: () => void;
+    clearState: () => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -33,6 +34,11 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     };
 
+    const clearState = () => {
+        setUser(null);
+        setIsLoading(false);
+    };
+
     useEffect(() => {
         refresh();
     }, []);
@@ -44,6 +50,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 setUser,
                 isLoading,
                 refresh,
+                clearState,
             }}
         >
             {children}

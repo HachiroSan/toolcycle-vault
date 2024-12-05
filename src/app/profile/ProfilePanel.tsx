@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-
 import { Role } from '@/components/shared/RoleBadge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -76,11 +75,12 @@ const SecurityAction = ({
 
 export default function ProfilePanel() {
     const [activeTab, setActiveTab] = useState('info');
-    const { user, refresh } = useUser();
+    const { user, refresh, clearState } = useUser();
 
     const handleLogout = async () => {
         try {
             toast.loading('Signing out...');
+            clearState();
             await deleteSession();
         } catch {
             // console.error('Logout error:', error);

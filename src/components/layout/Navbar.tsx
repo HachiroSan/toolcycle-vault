@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { ShoppingCart, User, Shield, Menu, Hexagon, Package, ChevronDown, ClipboardCopy } from 'lucide-react';
+import { ShoppingCart, User, Shield, Menu, Hexagon, Package, ChevronDown, ClipboardCopy, Home } from 'lucide-react';
 import { useCart } from '@/hooks/useCart';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,6 +17,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/co
 import { Badge } from '@/components/ui/badge';
 import * as VisuallyHidden from '@radix-ui/react-visually-hidden';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useUser } from '@/hooks/useUser';
 
 interface NavItem {
     name: string;
@@ -32,9 +33,13 @@ const validPaths = [
     '/cart',
     '/admin/manage-inventory',
     '/admin/manage-admins',
+    '/inventory/milling',
+    '/inventory/turning',
+    '/inventory/all',
 ];
 
 export default function Navbar() {
+    const { user } = useUser();
     const pathname = usePathname();
     const { state: cartState } = useCart();
     const [cartItemCount, setCartItemCount] = useState(0);
@@ -47,16 +52,16 @@ export default function Navbar() {
         return () => window.removeEventListener('scroll', handleScroll);
     }, [cartState.items]);
 
-    // Move conditional return after hooks
     const isInvalidPath = !validPaths.includes(pathname) || pathname.startsWith('/return/');
     if (isInvalidPath) {
         return null;
     }
 
-    const isAdmin = true;
+    const isAdmin = user?.labels.includes('admin') || user?.labels.includes('superadmin');
+    const isSuperAdmin = user?.labels.includes('superadmin');
 
     const navItems = [
-        // { name: 'Dashboard', href: '/', icon: Layout },
+        { name: 'Home', href: '/', icon: Home },
         { name: 'Return', href: '/return', icon: ClipboardCopy },
         { name: 'Inventory', href: '/inventory', icon: Package },
         { name: 'Profile', href: '/profile', icon: User },
@@ -64,7 +69,7 @@ export default function Navbar() {
 
     const adminItems = [
         { name: 'Manage Inventory', href: '/admin/manage-inventory' },
-        { name: 'Manage Admin', href: '/admin/manage-admins' },
+        ...(isSuperAdmin ? [{ name: 'Manage Admins', href: '/admin/manage-admins' }] : []),
     ];
 
     const NavLink = ({ item, className = '' }: { item: NavItem; className?: string }) => (
@@ -82,93 +87,94 @@ export default function Navbar() {
 
     return (
         <>
-            <header
-                className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-                    scrolled ? 'bg-background/95 backdrop-blur-md shadow-sm' : 'bg-background'
-                }`}
-            >
-                <div className="h-1 w-full bg-gradient-to-r from-primary/20 via-primary/40 to-primary/20" />
-                <nav className="container mx-auto px-4">
-                    <div className="flex items-center justify-between h-16">
-                        <Link href="/" className="flex items-center gap-2 group">
-                            <Hexagon className="h-7 w-7 text-primary transition-all duration-500 group-hover:rotate-180" />
-                            {/* <span className="tracking-widest font-custom text-xl from-primary via-primary/80 to-primary/60 bg-clip-text ">
-                                TOOLCYCLE VAULT
-                            </span> */}
-                        </Link>
+            <div className="pt-[65px]">
+                <header
+                    className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+                        scrolled ? 'bg-background/95 backdrop-blur-md shadow-sm' : 'bg-background'
+                    }`}
+                >
+                    <div className="h-1 w-full bg-gradient-to-r from-primary/20 via-primary/40 to-primary/20" />
+                    <nav className="container mx-auto px-4">
+                        <div className="flex items-center justify-between h-16">
+                            <Link href="/" className="flex items-center gap-2 group">
+                                <Hexagon className="h-7 w-7 text-primary transition-all duration-500 group-hover:rotate-180" />
+                            </Link>
 
-                        {/* Desktop Navigation */}
-                        <div className="hidden md:flex items-center gap-2">
-                            {navItems.map((item) => (
-                                <NavLink key={item.name} item={item} />
-                            ))}
+                            {/* Desktop Navigation */}
+                            <div className="hidden md:flex items-center gap-2">
+                                {navItems.map((item) => (
+                                    <NavLink key={item.name} item={item} />
+                                ))}
 
-                            {isAdmin && (
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" className="gap-2 ml-2 neon-button">
-                                            <Shield className="h-4 w-4" />
-                                            <span className="text-sm">Admin</span>
-                                            <ChevronDown className="h-4 w-4" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="w-56">
-                                        <div className="px-2 py-1.5 text-sm font-medium text-muted-foreground">
-                                            Admin Controls
-                                        </div>
-                                        <DropdownMenuSeparator />
-                                        {adminItems.map((item) => (
-                                            <DropdownMenuItem key={item.name} asChild>
-                                                <Link href={item.href} className="w-full">
-                                                    {item.name}
-                                                </Link>
-                                            </DropdownMenuItem>
-                                        ))}
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            )}
-                        </div>
-
-                        {/* Mobile Navigation */}
-                        <Sheet>
-                            <SheetTrigger asChild>
-                                <Button variant="ghost" size="icon" className="md:hidden">
-                                    <Menu className="h-6 w-6" />
-                                    <VisuallyHidden.Root>Open Menu</VisuallyHidden.Root>
-                                </Button>
-                            </SheetTrigger>
-                            <SheetContent side="right" className="w-72">
-                                <SheetHeader>
-                                    <SheetTitle className="text-left">Menu</SheetTitle>
-                                </SheetHeader>
-                                <div className="flex flex-col gap-2 pt-6">
-                                    {navItems.map((item) => (
-                                        <NavLink key={item.name} item={item} className="w-full" />
-                                    ))}
-
-                                    {isAdmin && (
-                                        <>
-                                            <div className="h-px bg-border my-4" />
-                                            <div className="px-3 py-2">
-                                                <span className="text-sm font-semibold text-muted-foreground">
-                                                    Admin Controls
+                                {isAdmin && (
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" className="gap-2 ml-2 neon-button">
+                                                <Shield className="h-4 w-4" />
+                                                <span className="text-sm">
+                                                    {isSuperAdmin ? 'Super Admin' : 'Admin'}
                                                 </span>
+                                                <ChevronDown className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" className="w-56">
+                                            <div className="px-2 py-1.5 text-sm font-medium text-muted-foreground">
+                                                {isSuperAdmin ? 'Super Admin Controls' : 'Admin Controls'}
                                             </div>
+                                            <DropdownMenuSeparator />
                                             {adminItems.map((item) => (
-                                                <NavLink
-                                                    key={item.name}
-                                                    item={{ ...item, icon: Shield }}
-                                                    className="w-full"
-                                                />
+                                                <DropdownMenuItem key={item.name} asChild>
+                                                    <Link href={item.href} className="w-full">
+                                                        {item.name}
+                                                    </Link>
+                                                </DropdownMenuItem>
                                             ))}
-                                        </>
-                                    )}
-                                </div>
-                            </SheetContent>
-                        </Sheet>
-                    </div>
-                </nav>
-            </header>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                )}
+                            </div>
+
+                            {/* Mobile Navigation */}
+                            <Sheet>
+                                <SheetTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="md:hidden">
+                                        <Menu className="h-6 w-6" />
+                                        <VisuallyHidden.Root>Open Menu</VisuallyHidden.Root>
+                                    </Button>
+                                </SheetTrigger>
+                                <SheetContent side="right" className="w-72">
+                                    <SheetHeader>
+                                        <SheetTitle className="text-left">Menu</SheetTitle>
+                                    </SheetHeader>
+                                    <div className="flex flex-col gap-2 pt-6">
+                                        {navItems.map((item) => (
+                                            <NavLink key={item.name} item={item} className="w-full" />
+                                        ))}
+
+                                        {isAdmin && (
+                                            <>
+                                                <div className="h-px bg-border my-4" />
+                                                <div className="px-3 py-2">
+                                                    <span className="text-sm font-semibold text-muted-foreground">
+                                                        {isSuperAdmin ? 'Super Admin Controls' : 'Admin Controls'}
+                                                    </span>
+                                                </div>
+                                                {adminItems.map((item) => (
+                                                    <NavLink
+                                                        key={item.name}
+                                                        item={{ ...item, icon: Shield }}
+                                                        className="w-full"
+                                                    />
+                                                ))}
+                                            </>
+                                        )}
+                                    </div>
+                                </SheetContent>
+                            </Sheet>
+                        </div>
+                    </nav>
+                </header>
+            </div>
 
             {/* Sticky Cart Bubble */}
             <AnimatePresence>

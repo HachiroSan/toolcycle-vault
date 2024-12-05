@@ -31,7 +31,7 @@ const containerVariants = {
     },
 };
 
-export default function InventoryPanel() {
+export default function InventoryPanel({ type }: { type?: string }) {
     const [items, setItems] = useState<ItemWithInventory[]>([]);
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState('');
@@ -74,6 +74,7 @@ export default function InventoryPanel() {
                     sortBy,
                     sortDirection,
                     status: 'active',
+                    type,
                 });
 
                 if (response.success && Array.isArray(response.data)) {

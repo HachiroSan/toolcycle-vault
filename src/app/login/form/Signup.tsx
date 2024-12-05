@@ -7,7 +7,8 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { createUser } from '@/actions/auth';
-import { Response } from '@/data/response.type';
+import { isRedirectError } from 'next/dist/client/components/redirect';
+import { useUser } from '@/hooks/useUser';
 
 const formSchema = z
     .object({
@@ -40,6 +41,7 @@ const formSchema = z
     });
 
 export default function SignUpForm() {
+    const { refresh } = useUser();
     const router = useRouter();
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -62,24 +64,36 @@ export default function SignUpForm() {
         studentId: string;
         program: string;
     }) => {
-        toast.promise(createUser(values), {
-            loading: 'Creating your account...',
-            success: (response: Response) => {
-                if (response.success) {
-                    form.reset();
-                    router.push('/');
-                    return 'Account created successfully!';
-                } else {
-                    form.setError('root', {
-                        type: 'manual',
-                        message: response.message,
-                    });
-                    throw new Error(response.message);
-                }
-            },
-            error: (err) => `Failed to create account: ${err.message}`,
-        });
+        toast.loading('Creating your account...', { id: 'signup' });
+
+        try {
+            const response = await createUser(values);
+            if (response.success) {
+                form.reset();
+                toast.success('Account created successfully!', { id: 'signup' });
+                router.push('/');
+            } else {
+                form.setError('root', {
+                    type: 'manual',
+                    message: response.message,
+                });
+                toast.error(response.message, { id: 'signup' });
+            }
+        } catch (error) {
+            if (isRedirectError(error)) {
+                toast.success('Account created successfully!', { id: 'signup' });
+                form.reset();
+                router.push('/inventory');
+            } else {
+                toast.error(`Failed to create account: ${(error as Error).message}`, { id: 'signup' });
+                console.error('Signup error:', error);
+            }
+        } finally {
+            toast.dismiss('signup');
+            refresh();
+        }
     };
+
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">

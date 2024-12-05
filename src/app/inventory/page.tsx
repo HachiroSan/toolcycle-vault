@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import InventoryPanel from './InventoryPanel';
+import MachineSelector from './MachineSelector';
 
 const InventoryPage: React.FC = () => {
     return (
@@ -15,7 +15,7 @@ const InventoryPage: React.FC = () => {
                     </nav>
                     <h1 className="text-3xl font-bold tracking-tight">Inventory</h1>
                 </div>
-                <InventoryPanel />
+                <MachineSelector />
             </div>
         </div>
     );

@@ -63,10 +63,10 @@ export async function createSession({ email, password }: { email: string; passwo
         });
 
         updatePrefs({ last_login: new Date().toISOString() });
-
-        return { success: true, message: 'Session created successfully' };
     } catch (error) {
         return { success: false, message: error instanceof Error ? error.message : 'Unknown error occurred' };
+    } finally {
+        redirect('/inventory');
     }
 }
 
@@ -85,10 +85,13 @@ export async function deleteSession() {
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get('session');
 
-    const { account } = await createSessionClient(sessionCookie?.value);
-    await account.deleteSession('current');
-    cookieStore.delete('session');
-    redirect('/login');
+    try {
+        const { account } = await createSessionClient(sessionCookie?.value);
+        await account.deleteSession('current');
+    } finally {
+        cookieStore.delete('session');
+        redirect('/login');
+    }
 }
 
 /**
@@ -140,6 +143,8 @@ export async function createUser(values: {
             success: false,
             message: error instanceof Error ? error.message : String(error),
         };
+    } finally {
+        redirect('/inventory');
     }
 }
 

@@ -5,10 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 // import auth from "@/auth";
-import { Response } from '@/data/response.type';
+import { isRedirectError } from 'next/dist/client/components/redirect';
 import { toast } from 'sonner';
 import { createSession } from '@/actions/auth';
-import { useRouter } from 'next/navigation';
+import { useUser } from '@/hooks/useUser';
 
 const formSchema = z.object({
     email: z.string().email({ message: 'Invalid email address.' }),
@@ -16,7 +16,8 @@ const formSchema = z.object({
 });
 
 const LoginForm = () => {
-    const router = useRouter();
+    const { refresh } = useUser();
+
     const form = useForm({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -26,23 +27,35 @@ const LoginForm = () => {
     });
 
     const onSubmit = async (values: { email: string; password: string }) => {
-        toast.promise(createSession(values), {
-            loading: 'Signing in...',
-            success: async (response: Response) => {
-                if (response.success) {
-                    form.reset();
-                    router.push('/login');
-                    return 'Signed in successfully!';
-                } else {
-                    form.setError('root', {
-                        type: 'manual',
-                        message: response.message,
-                    });
-                    throw new Error(response.message);
-                }
-            },
-            error: 'Sign in failed',
-        });
+        toast.loading('Signing in...', { id: 'login' });
+
+        try {
+            const response = await createSession(values);
+
+            if (response.success) {
+                form.reset();
+                toast.success('Signed in successfully!', { id: 'login' });
+            } else {
+                // Handle validation errors
+                form.setError('root', {
+                    type: 'manual',
+                    message: response.message,
+                });
+                toast.error(response.message, { id: 'login' });
+            }
+        } catch (error) {
+            // Check if error is NextJS redirect
+            if (isRedirectError(error)) {
+                toast.success('Signed in successfully!', { id: 'login' });
+                form.reset();
+            } else {
+                toast.error('Sign in failed', { id: 'login' });
+                console.error('Login error:', error);
+            }
+        } finally {
+            toast.dismiss('login');
+            refresh();
+        }
     };
 
     return (
