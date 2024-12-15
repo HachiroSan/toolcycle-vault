@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { createUser } from '@/actions/auth';
 import { isRedirectError } from 'next/dist/client/components/redirect';
 import { useUser } from '@/hooks/useUser';
-import { useRouter } from 'next/navigation';
 
 const formSchema = z
     .object({
@@ -42,7 +41,6 @@ const formSchema = z
 
 export default function SignUpForm() {
     const { refresh } = useUser();
-    const router = useRouter();
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -71,7 +69,6 @@ export default function SignUpForm() {
             if (isRedirectError(error)) {
                 toast.success('Account created successfully!', { id: 'signup' });
                 form.reset();
-                router.push('/');
                 refresh();
                 return;
             }
