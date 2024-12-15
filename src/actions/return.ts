@@ -110,15 +110,10 @@ export async function returnItems(
     request: ReturnBorrowRequest[],
     receiptId: string
 ): Promise<ServiceResponse<BorrowUpdate[]>> {
-    console.log('returnItems called with request:', request);
-
     const client = await getSessionDatabases();
     if (!client) {
-        console.log('Unauthorized: No client session found');
         return handleUnauthorized();
     }
-
-    console.log(request);
 
     const { databases, account } = client;
     const updatedBorrows: BorrowUpdate[] = [];
@@ -149,8 +144,6 @@ export async function returnItems(
         const returnedQuantities = receipt.returned_quantities || receipt.item_ids.map(() => 0);
 
         for (const item of request) {
-            console.log('Processing item:', item);
-
             // Find the borrow item
             const borrowItemsList = await databases.listDocuments<BorrowItem>(databaseId, borrowItemsCollectionId, [
                 Query.equal('receiptId', receiptId),

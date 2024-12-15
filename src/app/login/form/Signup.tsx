@@ -1,6 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { useRouter } from 'next/navigation';
 import * as z from 'zod';
 import { toast } from 'sonner';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -42,7 +41,6 @@ const formSchema = z
 
 export default function SignUpForm() {
     const { refresh } = useUser();
-    const router = useRouter();
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -64,33 +62,21 @@ export default function SignUpForm() {
         studentId: string;
         program: string;
     }) => {
-        toast.loading('Creating your account...', { id: 'signup' });
-
         try {
-            const response = await createUser(values);
-            if (response.success) {
-                form.reset();
-                toast.success('Account created successfully!', { id: 'signup' });
-                router.push('/');
-            } else {
-                form.setError('root', {
-                    type: 'manual',
-                    message: response.message,
-                });
-                toast.error(response.message, { id: 'signup' });
-            }
+            toast.loading('Creating your account...', { id: 'signup' });
+            await createUser(values);
         } catch (error) {
             if (isRedirectError(error)) {
                 toast.success('Account created successfully!', { id: 'signup' });
                 form.reset();
-                router.push('/inventory');
-            } else {
-                toast.error(`Failed to create account: ${(error as Error).message}`, { id: 'signup' });
-                console.error('Signup error:', error);
+                refresh();
+                return;
             }
-        } finally {
-            toast.dismiss('signup');
-            refresh();
+            form.setError('root', {
+                type: 'manual',
+                message: response.message,
+            });
+            toast.error(`Failed to create account: ${(error as Error).message}`, { id: 'signup' });
         }
     };
 

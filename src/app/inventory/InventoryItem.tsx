@@ -1,33 +1,26 @@
-'use client';
-
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ItemWithInventory } from '@/data/inventory.type';
 import { useCart } from '@/hooks/useCart';
 import { Badge } from '@/components/ui/badge';
-import { Package2, ShoppingCart, X, Info } from 'lucide-react';
+import { Wrench, Calendar, AlertCircle, Info, Package2 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+import { Card } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { CldImage } from 'next-cloudinary';
 import { cn } from '@/lib/utils';
-
-const fadeIn = {
-    initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0 },
-    exit: { opacity: 0, y: -20 },
-    transition: { duration: 0.2 },
-};
+import { DialogTitle } from '@radix-ui/react-dialog';
 
 export function InventoryItem({ item }: { item: ItemWithInventory }) {
     const { addToCart, removeFromCart, state } = useCart();
     const [isHovering, setIsHovering] = useState(false);
 
-    const isInCart = state.items.some((cartItem) => cartItem.item.$id === item.$id);
+    const isBooked = state.items.some((cartItem) => cartItem.item.$id === item.$id);
     const isAvailable = item.inventory.available_quantity > 0;
 
-    const handleCartAction = () => {
-        if (isInCart) {
+    const handleBooking = () => {
+        if (isBooked) {
             removeFromCart(item.$id);
         } else if (isAvailable) {
             addToCart({
@@ -38,122 +31,132 @@ export function InventoryItem({ item }: { item: ItemWithInventory }) {
         }
     };
 
-    const getButtonText = () => {
-        if (isInCart) {
-            return isHovering ? (
-                <>
-                    <ShoppingCart className="mr-2 h-4 w-4" />
-                    Remove from Cart
-                </>
-            ) : (
-                'In Cart'
-            );
-        }
-        if (!isAvailable) {
-            return 'Out of Stock';
-        }
-        return isHovering ? <>Select</> : <>Borrow</>;
-    };
-
     return (
-        <motion.div {...fadeIn}>
-            <Card className="w-full h-full flex flex-col overflow-hidden group">
-                <CardHeader className="pb-2">
-                    <div className="flex items-center justify-between">
-                        <CardTitle className="text-xl font-semibold truncate">{item.name}</CardTitle>
-                        <AnimatePresence>
-                            <motion.div {...fadeIn}>
-                                <Badge
-                                    variant={isInCart ? 'secondary' : isAvailable ? 'success' : 'destructive'}
-                                    className="ml-2"
-                                >
-                                    {isInCart ? 'In Cart' : isAvailable ? 'Available' : 'Out of Stock'}
-                                </Badge>
-                            </motion.div>
-                        </AnimatePresence>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+            <Card className="relative overflow-hidden bg-background border-2 hover:border-primary transition-colors duration-300">
+                {/* Large Image Section */}
+                <div className="relative aspect-video w-full overflow-hidden">
+                    {item.image_url ? (
+                        <Dialog>
+                            <DialogTitle className="hidden" />
+                            <DialogTrigger className="w-full h-full">
+                                <div className="relative w-full h-full">
+                                    <CldImage
+                                        src={item.image_url}
+                                        alt={item.name}
+                                        fill
+                                        sizes="(max-width: 768px) 100vw, 50vw"
+                                        className="object-cover transition-transform duration-300 hover:scale-110"
+                                        priority
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                                </div>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-4xl">
+                                <div className="relative aspect-video w-full">
+                                    <CldImage
+                                        src={item.image_url}
+                                        alt={item.name}
+                                        fill
+                                        className="object-contain"
+                                        sizes="90vw"
+                                    />
+                                </div>
+                            </DialogContent>
+                        </Dialog>
+                    ) : (
+                        <div className="w-full h-full bg-muted flex items-center justify-center">
+                            <Package2 className="h-20 w-20 text-muted-foreground" />
+                        </div>
+                    )}
+
+                    {/* Status Badge */}
+                    <Badge
+                        variant={isBooked ? 'secondary' : isAvailable ? 'success' : 'destructive'}
+                        className="absolute top-4 right-4 z-10"
+                    >
+                        {isBooked ? 'Reserved' : isAvailable ? 'Available' : 'Unavailable'}
+                    </Badge>
+                </div>
+
+                {/* Machine Info */}
+                <div className="p-4">
+                    <div className="flex items-start justify-between mb-2">
+                        <div>
+                            <h3 className="text-xl font-bold">{item.name}</h3>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+                                {item.brand && (
+                                    <div className="flex items-center gap-1">
+                                        <Wrench className="h-4 w-4" />
+                                        <span>{item.brand}</span>
+                                    </div>
+                                )}
+                                {item.type && <span>• {item.type}</span>}
+                            </div>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                        {item.brand && <span>{item.brand}</span>}
-                        {item.type && <span>• {item.type}</span>}
-                    </div>
-                </CardHeader>
-                <CardContent className="flex-grow">
-                    <Separator className="my-2" />
-                    <div className="flex items-center justify-between text-sm">
+
+                    {/* Machine Status and Actions */}
+                    <div className="flex items-center justify-between mt-4">
                         <TooltipProvider>
                             <Tooltip>
                                 <TooltipTrigger asChild>
                                     <div className="flex items-center gap-2 cursor-help">
-                                        <Package2 className="h-4 w-4 text-primary" />
-                                        <span>{item.inventory.available_quantity} available</span>
+                                        {isAvailable ? (
+                                            <>
+                                                <Calendar className="h-4 w-4 text-green-500" />
+                                                <span className="text-sm text-green-500">Ready for Use</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <AlertCircle className="h-4 w-4 text-red-500" />
+                                                <span className="text-sm text-red-500">Out Of Stock</span>
+                                            </>
+                                        )}
                                     </div>
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                    <p>Available for borrowing</p>
+                                    {isAvailable ? 'Machine is available for booking' : 'Machine is currently in use'}
                                 </TooltipContent>
                             </Tooltip>
                         </TooltipProvider>
-                        {item.description && (
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <div className="flex items-center gap-1 cursor-help text-muted-foreground hover:text-foreground transition-colors">
-                                            <Info className="h-4 w-4" />
-                                            <span>Details</span>
-                                        </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>{item.description}</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        )}
-                    </div>
-                </CardContent>
-                <CardFooter className="pt-2">
-                    <div
-                        className="w-full"
-                        onMouseEnter={() => setIsHovering(true)}
-                        onMouseLeave={() => setIsHovering(false)}
-                    >
+
                         <Button
-                            onClick={handleCartAction}
-                            disabled={!isAvailable && !isInCart}
+                            onClick={handleBooking}
+                            disabled={!isAvailable && !isBooked}
                             className={cn(
-                                'w-full transition-all duration-200',
-                                isInCart && !isHovering && 'bg-green-600 hover:bg-green-700', // Add green when in cart
-                                isInCart && isHovering && 'bg-destructive hover:bg-destructive/90' // Keep red for remove state
+                                'transition-all duration-200',
+                                isBooked && !isHovering && 'bg-green-600 hover:bg-green-700',
+                                isBooked && isHovering && 'bg-destructive hover:bg-destructive/90'
                             )}
+                            onMouseEnter={() => setIsHovering(true)}
+                            onMouseLeave={() => setIsHovering(false)}
                         >
                             <AnimatePresence mode="wait">
                                 <motion.div
-                                    key={`${isInCart}-${isHovering}`}
+                                    key={`${isBooked}-${isHovering}`}
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: -10 }}
                                     transition={{ duration: 0.15 }}
-                                    className="flex items-center justify-center"
+                                    className="flex items-center gap-2"
                                 >
-                                    {isInCart ? (
-                                        isHovering ? (
-                                            <>
-                                                <X className="mr-2 h-4 w-4" />
-                                                Remove
-                                            </>
-                                        ) : (
-                                            <>
-                                                <ShoppingCart className="mr-2 h-4 w-4" />
-                                                In Cart
-                                            </>
-                                        )
-                                    ) : (
-                                        <>{getButtonText()}</>
-                                    )}
+                                    {isBooked ? isHovering ? <>Cancel Booking</> : <>Booked</> : <>Book</>}
                                 </motion.div>
                             </AnimatePresence>
                         </Button>
                     </div>
-                </CardFooter>
+
+                    {/* Technical Details */}
+                    {item.description && (
+                        <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+                            <div className="flex items-start gap-2">
+                                <Info className="h-4 w-4 mt-1 flex-shrink-0 text-muted-foreground" />
+                                <p className="text-sm text-muted-foreground">{item.description}</p>
+                            </div>
+                        </div>
+                    )}
+                </div>
             </Card>
         </motion.div>
     );

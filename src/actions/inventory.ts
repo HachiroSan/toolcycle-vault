@@ -445,3 +445,34 @@ export async function deleteMultipleItems(itemIds: string[]): Promise<Response<v
         };
     }
 }
+
+export async function updateItemImage(itemId: string, imagePublicId: string): Promise<Response<void>> {
+    const cookieStore = await cookies();
+    const sessionCookie = cookieStore.get('session');
+
+    if (!sessionCookie) {
+        return { success: false, message: 'No session cookie found' };
+    }
+
+    try {
+        const { databases } = await createSessionClient(sessionCookie.value);
+
+        await databases.updateDocument(
+            process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!,
+            process.env.NEXT_PUBLIC_APPWRITE_ITEMS_COLLECTION_ID!,
+            itemId,
+            {
+                image_url: imagePublicId,
+            }
+        );
+        return {
+            success: true,
+            message: 'Successfully updated item image',
+        };
+    } catch (error) {
+        return {
+            success: false,
+            message: error instanceof Error ? error.message : 'Failed to update item image',
+        };
+    }
+}

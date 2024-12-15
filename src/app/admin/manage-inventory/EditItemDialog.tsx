@@ -26,14 +26,14 @@ import { Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
 // Define available types as a const array for type safety and reusability
-const ITEM_TYPES = ['turning', 'milling', 'drilling', 'other'] as const;
+const ITEM_TYPES = ['turning', 'milling', 'other'] as const;
 type ItemType = (typeof ITEM_TYPES)[number];
 
 // Improved schema with better validation logic
 const editFormSchema = z
     .object({
         name: z.string().min(2, 'Name must be at least 2 characters'),
-        type: z.enum(['turning', 'milling', 'drilling', 'other'] as const),
+        type: z.enum(['turning', 'milling', 'other'] as const),
         customType: z.string().optional(),
         size: z.string().nullable().optional(),
         length: z.coerce

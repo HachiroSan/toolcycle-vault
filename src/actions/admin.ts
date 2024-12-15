@@ -17,6 +17,7 @@ type Preference = {
     accessedAt: string;
     $createdAt: string;
     $updatedAt: string;
+    prefs: Record<string, unknown>;
 };
 
 /**
@@ -24,7 +25,7 @@ type Preference = {
  * @param {string[]} requiredLabels - Array of required labels to check
  * @returns Promise<boolean>
  */
-async function verifyAdmin(requiredLabels: string[]): Promise<{
+export async function verifyAdmin(requiredLabels: string[]): Promise<{
     isAdmin: boolean;
     id?: string;
 }> {
@@ -61,6 +62,7 @@ const sanitizePreference = (preference: Preference): Preference => {
         accessedAt: preference.accessedAt,
         $createdAt: preference.$createdAt,
         $updatedAt: preference.$updatedAt,
+        prefs: preference.prefs,
     };
 };
 
@@ -91,10 +93,8 @@ export async function getAdmins(label?: string): Promise<Response<{ total: numbe
             ...result,
             users: result.users.map(sanitizePreference),
         };
-
         // Revalidate the admins page to ensure fresh data
         revalidatePath('/admin/users');
-
         return {
             success: true,
             data: sanitizedUsers,

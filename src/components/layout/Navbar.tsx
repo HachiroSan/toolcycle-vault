@@ -3,7 +3,17 @@
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { ShoppingCart, User, Shield, Menu, Hexagon, Package, ChevronDown, ClipboardCopy, Home } from 'lucide-react';
+import {
+    ShoppingCart,
+    User,
+    Shield,
+    Menu,
+    Hexagon,
+    Package,
+    ChevronDown,
+    ClipboardCopy,
+    LayoutDashboard,
+} from 'lucide-react';
 import { useCart } from '@/hooks/useCart';
 import { Button } from '@/components/ui/button';
 import {
@@ -31,6 +41,7 @@ const validPaths = [
     '/inventory',
     '/profile',
     '/cart',
+    '/admin/dashboard',
     '/admin/manage-inventory',
     '/admin/manage-admins',
     '/inventory/milling',
@@ -61,13 +72,14 @@ export default function Navbar() {
     const isSuperAdmin = user?.labels.includes('superadmin');
 
     const navItems = [
-        { name: 'Home', href: '/', icon: Home },
+        { name: 'Dashboard', href: '/', icon: LayoutDashboard },
         { name: 'Return', href: '/return', icon: ClipboardCopy },
         { name: 'Inventory', href: '/inventory', icon: Package },
         { name: 'Profile', href: '/profile', icon: User },
     ];
 
     const adminItems = [
+        { name: 'Dashboard', href: '/admin/dashboard' },
         { name: 'Manage Inventory', href: '/admin/manage-inventory' },
         ...(isSuperAdmin ? [{ name: 'Manage Admins', href: '/admin/manage-admins' }] : []),
     ];
@@ -109,7 +121,16 @@ export default function Navbar() {
                                 {isAdmin && (
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" className="gap-2 ml-2 neon-button">
+                                            <Button
+                                                variant="ghost"
+                                                className="gap-2 ml-2 transition-all duration-300 
+                                                  
+                                                  bg-clip-padding backdrop-filter backdrop-blur-xl 
+                                                  border border-transparent 
+                                                  shadow-[0_0_1px_#fff,inset_0_0_2px_#fff,0_0_5px_rgba(59,130,246,0.5),0_0_15px_rgba(168,85,247,0.5)] 
+                                                  rounded-2xl 
+                                                  hover:shadow-[0_0_2px_#fff,inset_0_0_2px_#fff,0_0_10px_rgba(59,130,246,0.7),0_0_20px_rgba(168,85,247,0.7)]"
+                                            >
                                                 <Shield className="h-4 w-4" />
                                                 <span className="text-sm">
                                                     {isSuperAdmin ? 'Super Admin' : 'Admin'}

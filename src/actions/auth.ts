@@ -46,28 +46,23 @@ export async function getUser(): Promise<UserResponse> {
  *
  * @throws {Error} If an error occurs during session creation.
  */
-export async function createSession({ email, password }: { email: string; password: string }): Promise<Response> {
+export async function createSession({ email, password }: { email: string; password: string }) {
     const cookieStore = await cookies();
     const { account } = await createAdminClient();
 
-    try {
-        const session = await account.createEmailPasswordSession(email, password);
+    const session = await account.createEmailPasswordSession(email, password);
 
-        // Set the session cookie
-        cookieStore.set('session', session.secret, {
-            httpOnly: true,
-            sameSite: 'strict',
-            secure: true,
-            expires: new Date(session.expire),
-            path: '/',
-        });
+    // Set the session cookie
+    cookieStore.set('session', session.secret, {
+        httpOnly: true,
+        sameSite: 'strict',
+        secure: true,
+        expires: new Date(session.expire),
+        path: '/',
+    });
 
-        updatePrefs({ last_login: new Date().toISOString() });
-    } catch (error) {
-        return { success: false, message: error instanceof Error ? error.message : 'Unknown error occurred' };
-    } finally {
-        redirect('/inventory');
-    }
+    updatePrefs({ last_login: new Date().toISOString() });
+    redirect('/');
 }
 
 /**
@@ -105,47 +100,38 @@ export async function createUser(values: {
     phone?: string;
     studentId?: string;
     program?: string;
-}): Promise<Response> {
+}) {
     const { users, account } = await createAdminClient();
 
     const userId = ID.unique();
-    try {
-        // Create account
-        await account.create(userId, values.email, values.password, values.name);
+    // Create account
+    await account.create(userId, values.email, values.password, values.name);
 
-        // Set user preferences
-        await users.updatePrefs(userId, {
-            last_login: new Date().toISOString(),
-            studentId: values.studentId || '',
-            program: values.program || '',
-        });
+    // Set user preferences
+    await users.updatePrefs(userId, {
+        last_login: new Date().toISOString(),
+        studentId: values.studentId || '',
+        program: values.program || '',
+    });
 
-        // Set user role
-        await users.updateLabels(userId, ['student']);
+    // Set user role
+    await users.updateLabels(userId, ['student']);
 
-        const cookieStore = await cookies();
+    const cookieStore = await cookies();
 
-        // Create session
-        const session = await account.createEmailPasswordSession(values.email, values.password);
+    // Create session
+    const session = await account.createEmailPasswordSession(values.email, values.password);
 
-        // Set session cookie
-        cookieStore.set('session', session.secret, {
-            httpOnly: true,
-            sameSite: 'strict',
-            secure: true,
-            expires: new Date(session.expire),
-            path: '/',
-        });
+    // Set session cookie
+    cookieStore.set('session', session.secret, {
+        httpOnly: true,
+        sameSite: 'strict',
+        secure: true,
+        expires: new Date(session.expire),
+        path: '/',
+    });
 
-        return { success: true, message: 'User created successfully' };
-    } catch (error) {
-        return {
-            success: false,
-            message: error instanceof Error ? error.message : String(error),
-        };
-    } finally {
-        redirect('/inventory');
-    }
+    redirect('/');
 }
 
 /**

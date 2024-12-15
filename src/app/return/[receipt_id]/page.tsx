@@ -342,10 +342,12 @@ export default function ReceiptPage() {
                     <p className="text-muted-foreground mt-2">
                         This receipt may not exist or you don&apos;t have access to it.
                     </p>
-                    <Button variant="outline" className="mt-4" onClick={() => router.push('/return')}>
-                        <ArrowLeft className="w-4 h-4 mr-2" />
-                        Back to Returns
-                    </Button>
+                    {window.history.length > 1 ? (
+                        <Button variant="outline" className="mt-4" onClick={() => router.push('/return')}>
+                            <ArrowLeft className="w-4 h-4 mr-2" />
+                            Back
+                        </Button>
+                    ) : null}
                 </Card>
             </div>
         );
@@ -367,15 +369,17 @@ export default function ReceiptPage() {
                 )}
             </AnimatePresence>
             <div className="container max-w-4xl py-8">
-                <Button
-                    variant="ghost"
-                    className="mb-6"
-                    onClick={() => router.back()}
-                    aria-label="Go back to returns page"
-                >
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Back to Returns
-                </Button>
+                {window.history.length > 1 ? (
+                    <Button
+                        variant="ghost"
+                        className="mb-6"
+                        onClick={() => router.back()}
+                        aria-label="Go back to returns page"
+                    >
+                        <ArrowLeft className="w-4 h-4 mr-2" />
+                        Back
+                    </Button>
+                ) : null}
 
                 <Card>
                     <CardHeader className="border-b">

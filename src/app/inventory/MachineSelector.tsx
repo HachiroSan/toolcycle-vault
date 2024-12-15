@@ -23,8 +23,8 @@ const MachineTypeSelector: React.FC = () => {
     const [selected, setSelected] = useState('turning');
 
     const machines = [
-        { value: 'turning', label: 'Turning Machine', icon: TurningMachineSvg },
-        { value: 'milling', label: 'Milling Machine', icon: MillingMachineSvg },
+        { value: 'turning', label: 'Turning', icon: TurningMachineSvg },
+        { value: 'milling', label: 'Milling', icon: MillingMachineSvg },
         { value: 'all', label: 'All', icon: HelpCircle },
     ];
 

@@ -12,13 +12,56 @@ import { EditAdminDialog } from './EditAdminDialog';
 import { deleteAdmin, getAdmins } from '@/actions/admin';
 import RoleBadge from '@/components/shared/RoleBadge';
 import { DeleteDialog } from './DeleteDialog';
+import { CldImage } from 'next-cloudinary';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 type Admin = {
     id: string;
     name: string;
     email: string;
     role: 'admin' | 'superadmin';
+    prefs?: {
+        avatar_img_url?: string;
+    };
 };
+
+const TableSkeleton = () => (
+    <Table>
+        <TableHeader>
+            <TableRow>
+                <TableHead></TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+        </TableHeader>
+        <TableBody>
+            {[...Array(5)].map((_, i) => (
+                <TableRow key={i}>
+                    <TableCell>
+                        <div className="h-8 w-8 rounded-full bg-gray-200 animate-pulse" />
+                    </TableCell>
+                    <TableCell>
+                        <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
+                    </TableCell>
+                    <TableCell>
+                        <div className="h-4 w-32 bg-gray-200 rounded animate-pulse" />
+                    </TableCell>
+                    <TableCell>
+                        <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" />
+                    </TableCell>
+                    <TableCell className="text-right">
+                        <div className="flex justify-end space-x-2">
+                            <div className="h-8 w-8 bg-gray-200 rounded animate-pulse" />
+                            <div className="h-8 w-8 bg-gray-200 rounded animate-pulse" />
+                        </div>
+                    </TableCell>
+                </TableRow>
+            ))}
+        </TableBody>
+    </Table>
+);
 
 const AdminTable = ({
     admins,
@@ -32,6 +75,7 @@ const AdminTable = ({
     <Table>
         <TableHeader>
             <TableRow>
+                <TableHead></TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Role</TableHead>
@@ -48,6 +92,22 @@ const AdminTable = ({
                         exit={{ opacity: 0, y: -10 }}
                         transition={{ duration: 0.2 }}
                     >
+                        <TableCell>
+                            <Avatar className="h-8 w-8">
+                                {admin.prefs?.avatar_img_url ? (
+                                    <CldImage
+                                        src={admin.prefs.avatar_img_url}
+                                        width={32}
+                                        height={32}
+                                        alt={admin.name}
+                                        crop="fill"
+                                        className="h-full w-full object-cover"
+                                    />
+                                ) : (
+                                    <AvatarFallback>{admin.name?.charAt(0) || '?'}</AvatarFallback>
+                                )}
+                            </Avatar>
+                        </TableCell>
                         <TableCell className="font-medium">{admin.name}</TableCell>
                         <TableCell>{admin.email}</TableCell>
                         <TableCell>
@@ -90,6 +150,7 @@ export default function AdminPanel() {
                     name: user.name,
                     email: user.email,
                     role: user.labels[0] as 'admin' | 'superadmin',
+                    prefs: user.prefs,
                 }));
                 setAdmins(mappedAdmins);
             } else {
@@ -152,12 +213,8 @@ export default function AdminPanel() {
                             Error: {error}
                         </motion.div>
                     ) : isLoading ? (
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className="flex justify-center items-center h-64"
-                        >
-                            <RefreshCw className="w-8 h-8 animate-spin text-primary" />
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                            <TableSkeleton />
                         </motion.div>
                     ) : (
                         <AdminTable

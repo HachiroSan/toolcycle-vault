@@ -32,6 +32,7 @@ export interface BaseItem extends Document {
     coating?: string | null;
     material?: string | null;
     description?: string | null;
+    image_url?: string | null;
 }
 
 // Request interface (without Document properties)
@@ -91,6 +92,7 @@ export const inventoryItemSchema = z.object({
     coating: z.string().optional().nullable(),
     material: z.string().optional().nullable(),
     description: z.string().optional().nullable(),
+    image_url: z.string().optional().nullable(),
     inventory: z.object({
         total_quantity: z.number().min(0, 'Total quantity must be positive'),
         total_borrowed: z.number().min(0, 'Borrowed quantity must be positive'),

@@ -5,10 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 // import auth from "@/auth";
-import { isRedirectError } from 'next/dist/client/components/redirect';
 import { toast } from 'sonner';
 import { createSession } from '@/actions/auth';
 import { useUser } from '@/hooks/useUser';
+import { isRedirectError } from 'next/dist/client/components/redirect';
 
 const formSchema = z.object({
     email: z.string().email({ message: 'Invalid email address.' }),
@@ -27,34 +27,20 @@ const LoginForm = () => {
     });
 
     const onSubmit = async (values: { email: string; password: string }) => {
-        toast.loading('Signing in...', { id: 'login' });
-
         try {
-            const response = await createSession(values);
-
-            if (response.success) {
-                form.reset();
-                toast.success('Signed in successfully!', { id: 'login' });
-            } else {
-                // Handle validation errors
-                form.setError('root', {
-                    type: 'manual',
-                    message: response.message,
-                });
-                toast.error(response.message, { id: 'login' });
-            }
+            toast.loading('Signing in...', { id: 'login' });
+            await createSession(values);
         } catch (error) {
-            // Check if error is NextJS redirect
             if (isRedirectError(error)) {
-                toast.success('Signed in successfully!', { id: 'login' });
-                form.reset();
-            } else {
-                toast.error('Sign in failed', { id: 'login' });
-                console.error('Login error:', error);
+                toast.success('Signed in successfully.', { id: 'login' });
+                refresh();
+                return;
             }
-        } finally {
-            toast.dismiss('login');
-            refresh();
+            form.setError('root', {
+                type: 'manual',
+                message: error instanceof Error ? error.message : 'Failed to sign in.',
+            });
+            toast.error(error.message, { id: 'login' });
         }
     };
 

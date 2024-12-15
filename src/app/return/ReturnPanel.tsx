@@ -39,12 +39,28 @@ export default function ReturnPanel() {
         },
     });
 
+    // Update the returned receipts query
     const { data: returnedReceipts, isLoading: returnedLoading } = useQuery({
         queryKey: ['receipts', 'returned'],
         queryFn: async () => {
             const response = await getReceipts('returned');
-            return response.success ? response.data : [];
+            if (!response.success) {
+                return [];
+            }
+            // Pre-filter data at query time
+            return (
+                response.data?.filter(
+                    (receipt) =>
+                        !searchTerm ||
+                        receipt.$id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        receipt.subject?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        receipt.lecturer?.toLowerCase().includes(searchTerm.toLowerCase())
+                ) || []
+            );
         },
+        staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+        retry: 1, // Limit retries
+        refetchOnWindowFocus: false, // Prevent unnecessary refetches
     });
 
     // Fetch items when a receipt is selected

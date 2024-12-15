@@ -20,6 +20,7 @@ import {
     Building2,
     Paintbrush,
     RulerIcon,
+    GalleryThumbnails,
 } from 'lucide-react';
 import {
     AlertDialog,
@@ -39,6 +40,7 @@ import { deleteItemWithInventory } from '@/actions/inventory';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { HoverCardArrow } from '@radix-ui/react-hover-card';
 import { Badge } from '@/components/ui/badge';
+import ImageUploadWidget from './Image';
 
 interface InventoryResponse {
     success: boolean;
@@ -113,6 +115,12 @@ export function InventoryTableContent({
                                 onCheckedChange={handleSelectAll}
                             />
                         </TableCell>
+                        <TableCell className="w-[50px] text-center">
+                            <div className="flex items-center justify-center space-x-2">
+                                <GalleryThumbnails className="h-4 w-4 text-muted-foreground" />
+                                <span>Image</span>
+                            </div>
+                        </TableCell>
                         <TableCell className="text-center">
                             <div className="flex items-center justify-center space-x-2">
                                 <Package2 className="h-4 w-4 text-muted-foreground" />
@@ -165,6 +173,13 @@ export function InventoryTableContent({
                                 <Checkbox
                                     checked={selectedItems.has(item.$id)}
                                     onCheckedChange={() => handleSelectItem(item.$id)}
+                                />
+                            </TableCell>
+                            <TableCell className="w-[50px] p-2">
+                                <ImageUploadWidget
+                                    itemId={item.$id}
+                                    imageUrl={item.image_url ?? ''}
+                                    onUploadSuccess={() => {}}
                                 />
                             </TableCell>
                             <TableCell className="text-center">
