@@ -19,6 +19,7 @@ export async function middleware(request: NextRequest) {
     try {
         const userResponse = await getUser();
         const isAuthenticated = userResponse.success && userResponse.data;
+        console.log(userResponse);
 
         if (isAuthenticated) {
             if (isPublicRoute) {
