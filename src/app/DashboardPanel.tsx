@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User } from 'lucide-react';
 import { useUser } from '@/hooks/useUser';
 import { CldImage } from 'next-cloudinary';
+import { BorrowReceipt } from '@/data/borrow.type';
 
 const SkeletonCard = () => (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
@@ -63,7 +64,7 @@ interface ReceiptSummary {
     returnedReceipts: number;
     overdueReceipts: number;
     nearestDueDate: string | null;
-    nearestDueReceipt: any | null;
+    nearestDueReceipt: BorrowReceipt | null;
 }
 
 export default function DashboardPanel() {

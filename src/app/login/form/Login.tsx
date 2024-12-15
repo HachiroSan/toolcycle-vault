@@ -40,7 +40,7 @@ const LoginForm = () => {
                 type: 'manual',
                 message: error instanceof Error ? error.message : 'Failed to sign in.',
             });
-            toast.error(error.message, { id: 'login' });
+            toast.error(error instanceof Error ? error.message : 'Failed to sign in.', { id: 'login' });
         }
     };
 

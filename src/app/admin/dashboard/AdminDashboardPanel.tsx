@@ -27,7 +27,19 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { CldImage } from 'next-cloudinary';
 
 export default function DashboardPanel() {
-    const [summary, setSummary] = useState(null);
+    interface Summary {
+        monthlyStats: AggregatedStats[];
+        totalStats: {
+            totalReceipts: number;
+            activeReceipts: number;
+            returnedReceipts: number;
+            overdueReceipts: number;
+            totalBorrowedItems: number;
+            totalReturnedItems: number;
+        };
+    }
+
+    const [summary, setSummary] = useState<Summary | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [timeframe, setTimeframe] = useState('monthly');
@@ -44,6 +56,9 @@ export default function DashboardPanel() {
         user: {
             name: string;
             email: string;
+            prefs?: {
+                avatar_img_url?: string;
+            };
         };
         month: string;
     }
@@ -62,7 +77,16 @@ export default function DashboardPanel() {
         try {
             const response = await getAllUserReceipts();
             if (response.success && response.data) {
-                setReceipts(response.data.receipts);
+                setReceipts(
+                    response.data.receipts.map((receipt) => ({
+                        receipt: receipt.receipt,
+                        user: {
+                            ...receipt.user,
+                            prefs: receipt.user.prefs as { avatar_img_url?: string },
+                        },
+                        month: new Date(receipt.receipt.dueDate).toLocaleString('default', { month: 'long' }),
+                    }))
+                );
             }
         } catch (error) {
             console.error('Failed to fetch receipts:', error);
@@ -197,7 +221,13 @@ export default function DashboardPanel() {
         try {
             const response = await getReceiptsSummary();
             if (response.success && response.data) {
-                setSummary(response.data);
+                setSummary({
+                    ...response.data,
+                    monthlyStats: response.data.monthlyStats.map((stat, index) => ({
+                        ...stat,
+                        label: `Month ${index + 1}`,
+                    })),
+                });
             }
         } catch (error) {
             console.error('Failed to fetch summary:', error);
@@ -212,10 +242,15 @@ export default function DashboardPanel() {
         fetchReceipts();
     }, []);
 
-    const calculateTrend = (current, previous) => {
+    interface Trend {
+        trend: number;
+        isIncrease: boolean;
+    }
+
+    const calculateTrend = (current: number, previous: number): Trend => {
         if (!previous) return { trend: 0, isIncrease: false };
         const trend = ((current - previous) / previous) * 100;
-        return { trend: Math.abs(trend).toFixed(1), isIncrease: trend > 0 };
+        return { trend: parseFloat(Math.abs(trend).toFixed(1)), isIncrease: trend > 0 };
     };
 
     if (isLoading) {
@@ -231,14 +266,20 @@ export default function DashboardPanel() {
             title: 'Total Receipts',
             value: summary?.totalStats.totalReceipts,
             subValue: `${summary?.totalStats.totalBorrowedItems} items borrowed`,
-            trend: calculateTrend(summary?.totalStats.totalReceipts, summary?.totalStats.totalReceipts - 10),
+            trend: calculateTrend(
+                summary?.totalStats.totalReceipts ?? 0,
+                (summary?.totalStats.totalReceipts ?? 0) - 10
+            ),
             color: 'blue',
         },
         {
             title: 'Active Receipts',
             value: summary?.totalStats.activeReceipts,
             subValue: 'Currently borrowed items',
-            trend: calculateTrend(summary?.totalStats.activeReceipts, summary?.totalStats.activeReceipts - 5),
+            trend: calculateTrend(
+                summary?.totalStats.activeReceipts ?? 0,
+                (summary?.totalStats.activeReceipts ?? 0) - 5
+            ),
             icon: Calendar,
             color: 'green',
         },
@@ -246,14 +287,20 @@ export default function DashboardPanel() {
             title: 'Returned Items',
             value: summary?.totalStats.totalReturnedItems,
             subValue: 'Successfully returned',
-            trend: calculateTrend(summary?.totalStats.totalReturnedItems, summary?.totalStats.totalReturnedItems - 8),
+            trend: calculateTrend(
+                summary?.totalStats.totalReturnedItems ?? 0,
+                (summary?.totalStats.totalReturnedItems ?? 0) - 8
+            ),
             color: 'indigo',
         },
         {
             title: 'Overdue Items',
             value: summary?.totalStats.overdueReceipts,
             subValue: 'Need attention',
-            trend: calculateTrend(summary?.totalStats.overdueReceipts, summary?.totalStats.overdueReceipts - 2),
+            trend: calculateTrend(
+                summary?.totalStats.overdueReceipts ?? 0,
+                (summary?.totalStats.overdueReceipts ?? 0) - 2
+            ),
             icon: AlertCircle,
             isAlert: true,
             color: 'red',
@@ -292,7 +339,7 @@ export default function DashboardPanel() {
                         <Card
                             className={`
               hover:shadow-lg transition-all duration-300
-              ${stat.isAlert && stat.value > 0 ? 'border-red-200 bg-red-50' : ''}
+              ${stat.isAlert && (stat.value ?? 0) > 0 ? 'border-red-200 bg-red-50' : ''}
             `}
                         >
                             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -362,11 +409,14 @@ export default function DashboardPanel() {
                     <div className="h-[400px] mt-4">
                         <ResponsiveContainer width="100%" height="100%">
                             {chartType === 'line' ? (
-                                <LineChart data={aggregateData(summary, timeframe)}>
+                                <LineChart data={summary ? aggregateData(summary, timeframe) : []}>
                                     <CartesianGrid strokeDasharray="3 3" className="opacity-50" />
                                     <XAxis
                                         dataKey="label"
-                                        interval={getTickInterval(timeframe, aggregateData(summary, timeframe).length)}
+                                        interval={getTickInterval(
+                                            timeframe,
+                                            summary ? aggregateData(summary, timeframe).length : 0
+                                        )}
                                         angle={-45}
                                         textAnchor="end"
                                         height={60}
@@ -414,7 +464,7 @@ export default function DashboardPanel() {
                                     />
                                 </LineChart>
                             ) : (
-                                <AreaChart data={aggregateData(summary, timeframe)}>
+                                <AreaChart data={summary ? aggregateData(summary, timeframe) : []}>
                                     <CartesianGrid strokeDasharray="3 3" className="opacity-50" />
                                     <XAxis
                                         dataKey="label"
@@ -545,7 +595,7 @@ export default function DashboardPanel() {
                                                 items
                                             </TableCell>
                                             <TableCell>
-                                                {new Date(receipt.receipt.dueDate).toLocaleDateString()}
+                                                {new Date(receipt.receipt.dueDate).toLocaleDateString('en-GB')}
                                             </TableCell>
                                             <TableCell>
                                                 <div
@@ -562,7 +612,7 @@ export default function DashboardPanel() {
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-muted-foreground">
-                                                {new Date(receipt.receipt.$createdAt).toLocaleDateString()}
+                                                {new Date(receipt.receipt.$createdAt).toLocaleDateString('en-GB')}
                                             </TableCell>
                                         </TableRow>
                                     ))}

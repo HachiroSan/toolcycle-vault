@@ -74,7 +74,7 @@ export default function SignUpForm() {
             }
             form.setError('root', {
                 type: 'manual',
-                message: response.message,
+                message: (error as Error).message,
             });
             toast.error(`Failed to create account: ${(error as Error).message}`, { id: 'signup' });
         }

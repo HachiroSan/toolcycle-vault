@@ -3,10 +3,10 @@
 import { cookies } from 'next/headers';
 import { Query, Databases, Account } from 'node-appwrite';
 import { createSessionClient } from '@/lib/appwrite/config';
-import { ServiceResponse } from '@/data/borrow.type';
+import { BorrowReceipt } from '@/data/borrow.type';
 
 // Helper function to handle unauthorized cases
-function handleUnauthorized<T>(): ServiceResponse<T> {
+function handleUnauthorized() {
     return { success: false, message: 'Unauthorized', data: undefined };
 }
 
@@ -40,7 +40,7 @@ export async function getUserReceiptSummary() {
             returnedReceipts: 0,
             overdueReceipts: 0,
             nearestDueDate: null as string | null,
-            nearestDueReceipt: null,
+            nearestDueReceipt: null as BorrowReceipt | null,
         };
 
         // Get active receipts and sort by due date
@@ -51,7 +51,7 @@ export async function getUserReceiptSummary() {
         // Set nearest due date if there are active receipts
         if (activeReceipts.length > 0) {
             summary.nearestDueDate = activeReceipts[0].dueDate;
-            summary.nearestDueReceipt = activeReceipts[0];
+            summary.nearestDueReceipt = activeReceipts[0] as BorrowReceipt;
         }
 
         // Calculate other metrics

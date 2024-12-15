@@ -1,20 +1,56 @@
-import type { NextConfig } from 'next';
-
-const nextConfig: NextConfig = {
-    async headers() {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+    async redirects() {
         return [
+            // Redirect authenticated users from public routes to home
             {
                 source: '/login',
-                headers: [
+                has: [
                     {
-                        key: 'Cache-Control',
-                        value: 'no-store, no-cache, must-revalidate, proxy-revalidate',
+                        type: 'cookie',
+                        key: 'session',
                     },
                 ],
+                permanent: false,
+                destination: '/',
+            },
+            {
+                source: '/recovery',
+                has: [
+                    {
+                        type: 'cookie',
+                        key: 'session',
+                    },
+                ],
+                permanent: false,
+                destination: '/',
+            },
+            // Protect admin routes
+            {
+                source: '/admin/manage-admins',
+                missing: [
+                    {
+                        type: 'cookie',
+                        key: 'session',
+                    },
+                ],
+                permanent: false,
+                destination: '/login',
+            },
+            // Protect generic routes
+            {
+                source: '/:path(profile|return|inventory|admin)/:slug*',
+                missing: [
+                    {
+                        type: 'cookie',
+                        key: 'session',
+                    },
+                ],
+                permanent: false,
+                destination: '/login',
             },
         ];
     },
-    /* other config options here */
 };
 
 export default nextConfig;

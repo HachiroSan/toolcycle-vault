@@ -93,12 +93,18 @@ type TabId = 'info' | 'security' | 'edit' | 'changePassword' | 'changeEmail' | '
 export default function ProfilePanel() {
     const [activeTab, setActiveTab] = useState<TabId>('info');
     const { user, refresh, clearState } = useUser();
-    const [imageError, setImageError] = useState(false);
 
-    const handleUpload = async (result) => {
-        if (result?.info?.secure_url) {
-            const imageUrl = result.info.secure_url;
+    interface UploadResult {
+        info?:
+            | {
+                  secure_url?: string;
+              }
+            | string;
+    }
 
+    const handleUpload = async (result: UploadResult) => {
+        const imageUrl = typeof result.info === 'string' ? result.info : result.info?.secure_url;
+        if (imageUrl) {
             try {
                 const response = await updatePrefs({ avatar_img_url: imageUrl });
                 if (response.success) {
@@ -139,7 +145,7 @@ export default function ProfilePanel() {
                     <div className="md:w-1/3 bg-gradient-to-b from-primary/5 to-primary/10 p-8 flex flex-col items-center justify-start space-y-6">
                         <div className="relative group">
                             <Avatar className="w-full h-full shadow-lg">
-                                {user?.prefs?.avatar_img_url && !imageError ? (
+                                {user?.prefs?.avatar_img_url ? (
                                     <CldImage
                                         src={user.prefs.avatar_img_url}
                                         width={200}

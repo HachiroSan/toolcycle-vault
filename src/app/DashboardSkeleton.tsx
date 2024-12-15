@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User } from 'lucide-react';
 import { useUser } from '@/hooks/useUser';
 import { CldImage } from 'next-cloudinary';
+import { BorrowReceipt } from '@/data/borrow.type';
 
 interface ReceiptSummary {
     totalBorrowedItems: number;
@@ -19,7 +20,7 @@ interface ReceiptSummary {
     returnedReceipts: number;
     overdueReceipts: number;
     nearestDueDate: string | null;
-    nearestDueReceipt: any | null;
+    nearestDueReceipt: BorrowReceipt | null;
 }
 
 export default function DashboardPanel() {
@@ -33,7 +34,7 @@ export default function DashboardPanel() {
         try {
             const response = await getUserReceiptSummary();
             if (response.success) {
-                setSummary(response.data);
+                setSummary(response.data!);
             }
         } catch (error) {
             console.error('Failed to fetch summary:', error);

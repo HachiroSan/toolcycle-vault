@@ -127,6 +127,23 @@ export async function getReceiptsSummary(): Promise<ReceiptsSummaryResponse> {
     }
 }
 
+interface UserReceiptsResponse {
+    success: boolean;
+    message?: string;
+    data?: {
+        receipts: {
+            receipt: BorrowReceipt;
+            user: {
+                id: string;
+                name: string;
+                email: string;
+                prefs?: unknown;
+            };
+        }[];
+        total: number;
+    };
+}
+
 export async function getAllUserReceipts(page: number = 1, limit: number = 10): Promise<UserReceiptsResponse> {
     try {
         // Verify admin access
@@ -161,7 +178,6 @@ export async function getAllUserReceipts(page: number = 1, limit: number = 10): 
                         id: userData.$id,
                         name: userData.name,
                         email: userData.email,
-                        role: userData.role,
                         prefs: userData.prefs,
                     },
                 };
