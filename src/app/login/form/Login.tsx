@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { createSession } from '@/actions/auth';
 import { useUser } from '@/hooks/useUser';
 import { isRedirectError } from 'next/dist/client/components/redirect';
+import { useRouter } from 'next/navigation';
 
 const formSchema = z.object({
     email: z.string().email({ message: 'Invalid email address.' }),
@@ -17,6 +18,7 @@ const formSchema = z.object({
 
 const LoginForm = () => {
     const { refresh } = useUser();
+    const router = useRouter();
 
     const form = useForm({
         resolver: zodResolver(formSchema),
@@ -33,6 +35,7 @@ const LoginForm = () => {
         } catch (error) {
             if (isRedirectError(error)) {
                 toast.success('Signed in successfully.', { id: 'login' });
+                router.push('/');
                 refresh();
                 return;
             }
