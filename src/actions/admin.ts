@@ -9,7 +9,7 @@ import { SanitizedUser } from '@/data/user.type';
 
 const SUPERADMIN_LABELS = ['superadmin']; // Define your superadmin labels
 
-type Preference = {
+export type Preference = {
     $id: string;
     name: string;
     email: string;
@@ -303,6 +303,69 @@ export async function editAdmin(params: EditAdminParams): Promise<Response<void>
         return {
             success: false,
             message: error instanceof Error && error.message ? error.message : 'Failed to update admin user',
+        };
+    }
+}
+
+/**
+ * [Superadmin Only]: Promotes a student to admin/superadmin role
+ * @param {string} userId - ID of student to promote
+ * @param {'admin' | 'superadmin'} targetRole - Role to promote to
+ * @returns {Promise<Response<void>>}
+ */
+export async function promoteToAdmin(userId: string, targetRole: 'admin' | 'superadmin'): Promise<Response<void>> {
+    try {
+        // Verify superadmin privileges
+        const currentUser = await verifyAdmin(SUPERADMIN_LABELS);
+        if (!currentUser.isAdmin) {
+            throw new Error('Unauthorized: Requires superadmin privileges');
+        }
+
+        const { users } = await createAdminClient();
+
+        // Verify user exists and is a student
+        const user = await users.get(userId);
+        if (!user.labels.includes('student')) {
+            throw new Error('User is not a student');
+        }
+
+        // Update user labels to new role
+        await users.updateLabels(userId, [targetRole]);
+
+        // Revalidate admin pages
+        revalidatePath('/admin/users');
+
+        return {
+            success: true,
+            message: `User promoted to ${targetRole} successfully`,
+        };
+    } catch (error) {
+        return {
+            success: false,
+            message: error instanceof Error ? error.message : 'Failed to promote user',
+        };
+    }
+}
+
+// Add new function to get students
+export async function getStudents(): Promise<Response<{ users: Preference[] }>> {
+    try {
+        const currentUser = await verifyAdmin(SUPERADMIN_LABELS);
+        if (!currentUser.isAdmin) {
+            throw new Error('Unauthorized: Requires superadmin privileges');
+        }
+        const { users } = await createAdminClient();
+        const result = await users.list([Query.contains('labels', ['student'])]);
+        return {
+            success: true,
+            data: {
+                users: result.users.map(sanitizePreference),
+            },
+        };
+    } catch (error) {
+        return {
+            success: false,
+            message: error instanceof Error ? error.message : 'Failed to fetch students',
         };
     }
 }
