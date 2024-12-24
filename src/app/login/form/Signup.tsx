@@ -23,9 +23,7 @@ const formSchema = z
             .regex(/^\+[1-9]\d{0,2}[-\s]\d{3}[-\s]\d{3}[-\s]\d{4}$/, {
                 message: 'Please enter a valid phone number with country code (e.g. +1 234-567-8900)',
             }),
-        studentId: z.string().min(7, {
-            message: 'Student ID must be at least 7 characters.',
-        }),
+        studentId: z.string().optional(),
         program: z.string().min(2, {
             message: 'Program must be at least 2 characters.',
         }),
@@ -59,7 +57,7 @@ export default function SignUpForm() {
         password: string;
         phone: string;
         name: string;
-        studentId: string;
+        studentId?: string;
         program: string;
     }) => {
         try {
