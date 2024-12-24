@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Pencil, Trash2, UserPlus, RefreshCw } from 'lucide-react';
+import { Pencil, Trash2, UserPlus, RefreshCw, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import AddAdminDialog from './AddAdminDialog';
 import { EditAdminDialog } from './EditAdminDialog';
@@ -14,12 +14,13 @@ import RoleBadge from '@/components/shared/RoleBadge';
 import { DeleteDialog } from './DeleteDialog';
 import { CldImage } from 'next-cloudinary';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { PromoteAdminDialog } from './PromoteAdminDialog';
 
-type Admin = {
+export type User = {
     id: string;
     name: string;
     email: string;
-    role: 'admin' | 'superadmin';
+    role: 'student' | 'admin' | 'superadmin';
     prefs?: {
         avatar_img_url?: string;
     };
@@ -68,9 +69,9 @@ const AdminTable = ({
     onEdit,
     onDelete,
 }: {
-    admins: Admin[];
-    onEdit: (admin: Admin) => void;
-    onDelete: (admin: Admin) => void;
+    admins: User[];
+    onEdit: (admin: User) => void;
+    onDelete: (admin: User) => void;
 }) => (
     <Table>
         <TableHeader>
@@ -131,13 +132,14 @@ const AdminTable = ({
 );
 
 export default function AdminPanel() {
-    const [admins, setAdmins] = useState<Admin[]>([]);
+    const [admins, setAdmins] = useState<User[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-    const [currentAdmin, setCurrentAdmin] = useState<Admin | null>(null);
+    const [currentAdmin, setCurrentAdmin] = useState<User | null>(null);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [isPromoteDialogOpen, setIsPromoteDialogOpen] = useState(false);
 
     const fetchAdmins = useCallback(async () => {
         setError(null);
@@ -145,7 +147,7 @@ export default function AdminPanel() {
         try {
             const response = await getAdmins();
             if (response.success && response.data) {
-                const mappedAdmins: Admin[] = response.data.users.map((user) => ({
+                const mappedAdmins: User[] = response.data.users.map((user) => ({
                     id: user.$id,
                     name: user.name,
                     email: user.email,
@@ -198,9 +200,17 @@ export default function AdminPanel() {
                         <Button onClick={fetchAdmins} variant="outline" size="sm" className="flex items-center gap-2">
                             <RefreshCw className="w-4 h-4" />
                         </Button>
+                        <Button
+                            onClick={() => setIsPromoteDialogOpen(true)}
+                            variant="outline"
+                            className="flex items-center gap-2"
+                        >
+                            <Users className="w-4 h-4" />
+                            Promote User
+                        </Button>
                         <Button onClick={() => setIsAddDialogOpen(true)} className="flex items-center gap-2">
                             <UserPlus className="w-4 h-4" />
-                            Add Admin
+                            Add New Admin
                         </Button>
                     </div>
 
@@ -233,6 +243,12 @@ export default function AdminPanel() {
                     <AddAdminDialog
                         isOpen={isAddDialogOpen}
                         onClose={() => setIsAddDialogOpen(false)}
+                        onSuccess={fetchAdmins}
+                    />
+
+                    <PromoteAdminDialog
+                        isOpen={isPromoteDialogOpen}
+                        onClose={() => setIsPromoteDialogOpen(false)}
                         onSuccess={fetchAdmins}
                     />
 
