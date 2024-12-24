@@ -8,18 +8,12 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-
-type Admin = {
-    id: string;
-    name: string;
-    email: string;
-    role: 'admin' | 'superadmin';
-};
+import { User } from './AdminPanel';
 
 type DeleteDialogProps = {
     isOpen: boolean;
     onClose: () => void;
-    admin: Admin | null;
+    admin: User | null;
     onConfirm: () => void;
 };
 
