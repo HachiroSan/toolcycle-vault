@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { editAdmin } from '@/actions/admin';
 import { toast } from 'sonner';
+import { User } from './AdminPanel';
 
 const formSchema = z.object({
     name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -18,18 +19,11 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-type Admin = {
-    id: string;
-    name: string;
-    email: string;
-    role: 'admin' | 'superadmin';
-};
-
 type EditAdminDialogProps = {
     isOpen: boolean;
     onSuccess?: () => void;
     onClose: () => void;
-    admin: Admin | null;
+    admin: User | null;
 };
 
 export function EditAdminDialog({ isOpen, onClose, onSuccess, admin }: EditAdminDialogProps) {
