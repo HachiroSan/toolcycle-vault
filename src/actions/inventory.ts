@@ -120,7 +120,7 @@ export async function getItemsWithInventory(params?: GetItemsParams): Promise<Pa
     const type = params?.type || '';
     const sortBy = params?.sortBy || 'name';
     const sortDirection = params?.sortDirection || 'asc';
-    const status = params?.status || 'active'; // default to active items
+    const status = params?.status || 'active';
 
     if (!sessionCookie) {
         return {
@@ -142,7 +142,6 @@ export async function getItemsWithInventory(params?: GetItemsParams): Promise<Pa
         } else if (status === 'deleted') {
             queries.push(Query.equal('is_deleted', true));
         }
-        // 'all' case doesn't need a filter
 
         if (search) {
             queries.push(Query.search('name', search));
@@ -169,20 +168,39 @@ export async function getItemsWithInventory(params?: GetItemsParams): Promise<Pa
                 applySort(sortBy);
         }
 
-        const [items, inventoryList] = await Promise.all([
-            databases.listDocuments<BaseItem>(
-                process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!,
-                process.env.NEXT_PUBLIC_APPWRITE_ITEMS_COLLECTION_ID!,
-                queries
-            ),
-            databases.listDocuments<InventoryDocument>(
-                process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!,
-                process.env.NEXT_PUBLIC_APPWRITE_INVENTORY_COLLECTION_ID!
-            ),
-        ]);
+        // First get the items
+        const items = await databases.listDocuments<BaseItem>(
+            process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!,
+            process.env.NEXT_PUBLIC_APPWRITE_ITEMS_COLLECTION_ID!,
+            queries
+        );
 
+        // Then get inventories for these items in a single query
+        const itemIds = items.documents.map(item => item.$id);
+        console.log('Fetching inventories for items:', itemIds);
+
+        const inventoryQueries = [Query.equal('is_deleted', false)];
+        if (itemIds.length > 0) {
+            inventoryQueries.push(Query.equal('itemId', itemIds));
+        }
+
+        const inventoryList = await databases.listDocuments<InventoryDocument>(
+            process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!,
+            process.env.NEXT_PUBLIC_APPWRITE_INVENTORY_COLLECTION_ID!,
+            inventoryQueries
+        );
+
+        console.log('Found inventories:', inventoryList.documents.length);
+
+        // Create a map for quick inventory lookup
+        const inventoryMap = new Map(
+            inventoryList.documents.map(inv => [inv.itemId, inv])
+        );
+
+        // Map items to include their inventory
         const itemsWithInventory = items.documents.map((item) => {
-            const inventory = inventoryList.documents.find((inv) => inv.itemId === item.$id);
+            const inventory = inventoryMap.get(item.$id);
+            console.log(`Mapping inventory for item ${item.$id}:`, inventory ? 'found' : 'not found');
 
             return {
                 ...item,
@@ -208,6 +226,7 @@ export async function getItemsWithInventory(params?: GetItemsParams): Promise<Pa
             hasMore: offset + items.documents.length < items.total,
         };
     } catch (error) {
+        console.error('Error in getItemsWithInventory:', error);
         return {
             success: false,
             message: error instanceof Error ? error.message : 'Failed to retrieve items',
@@ -222,41 +241,53 @@ export async function createItem(request: CreateItemRequest): Promise<Response<I
     const sessionCookie = cookieStore.get('session');
 
     if (!sessionCookie) {
+        console.error('createItem: No session cookie found');
         return { success: false, message: 'No session cookie found' };
     }
 
     try {
+        console.log('createItem: Request received:', request);
         const { databases } = await createSessionClient(sessionCookie.value);
         const itemId = ID.unique();
+
+        const itemData = {
+            name: request.name,
+            type: request.type,
+            size: request.size,
+            length: request.length !== undefined ? Number(request.length) : null,
+            brand: request.brand,
+            coating: request.coating,
+            material: request.material,
+            description: request.description,
+            is_deleted: false
+        };
+        console.log('createItem: Creating item with data:', itemData);
 
         const item = await databases.createDocument<BaseItem>(
             process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!,
             process.env.NEXT_PUBLIC_APPWRITE_ITEMS_COLLECTION_ID!,
             itemId,
-            {
-                name: request.name,
-                type: request.type,
-                size: request.size,
-                length: request.length !== undefined || 0 ? Number(request.length) : null,
-                brand: request.brand,
-                coating: request.coating,
-                material: request.material,
-                description: request.description,
-            }
+            itemData
         );
+        console.log('createItem: Item created:', item);
 
         const inventoryId = ID.unique();
+        const inventoryData = {
+            itemId: item.$id,
+            total_quantity: request.total_quantity,
+            total_borrowed: request.total_borrowed || 0,
+            available_quantity: request.total_quantity - (request.total_borrowed || 0),
+            is_deleted: false
+        };
+        console.log('createItem: Creating inventory with data:', inventoryData);
+
         const inventory = await databases.createDocument<InventoryDocument>(
             process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!,
             process.env.NEXT_PUBLIC_APPWRITE_INVENTORY_COLLECTION_ID!,
             inventoryId,
-            {
-                itemId: item.$id,
-                total_quantity: request.total_quantity,
-                total_borrowed: request.total_borrowed || 0,
-                available_quantity: request.total_quantity - (request.total_borrowed || 0),
-            }
+            inventoryData
         );
+        console.log('createItem: Inventory created:', inventory);
 
         const itemWithInventory: ItemWithInventory = {
             ...item,
@@ -266,6 +297,7 @@ export async function createItem(request: CreateItemRequest): Promise<Response<I
                 available_quantity: inventory.available_quantity,
             },
         };
+        console.log('createItem: Returning itemWithInventory:', itemWithInventory);
 
         return {
             success: true,
@@ -273,6 +305,7 @@ export async function createItem(request: CreateItemRequest): Promise<Response<I
             data: itemWithInventory,
         };
     } catch (error) {
+        console.error('createItem: Error occurred:', error);
         return {
             success: false,
             message: error instanceof Error ? error.message : 'Failed to create item',
