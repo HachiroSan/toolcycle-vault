@@ -108,10 +108,6 @@ export default function ReturnPanel() {
 
             <Tabs defaultValue="active" className="space-y-4">
                 <TabsList>
-                    <TabsTrigger value="overdue" className="space-x-2">
-                        <AlertCircle className="w-4 h-4" />
-                        <span>Overdue</span>
-                    </TabsTrigger>
                     <TabsTrigger value="active" className="space-x-2">
                         <Clock className="w-4 h-4" />
                         <span>Active</span>
@@ -120,31 +116,11 @@ export default function ReturnPanel() {
                         <CheckCircle2 className="w-4 h-4" />
                         <span>Returned</span>
                     </TabsTrigger>
+                    <TabsTrigger value="overdue" className="space-x-2">
+                        <AlertCircle className="w-4 h-4" />
+                        <span>Overdue</span>
+                    </TabsTrigger>
                 </TabsList>
-                <TabsContent value="overdue" className="space-y-4">
-                    {overdueLoading ? (
-                        <div className="flex justify-center py-8">
-                            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                        </div>
-                    ) : filterReceipts(overdueReceipts)?.length === 0 ? (
-                        <Card className="p-8 text-center">
-                            <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-4" />
-                            <p className="text-lg font-semibold">No overdue items</p>
-                            <p className="text-muted-foreground">All your active borrows are within the due date</p>
-                        </Card>
-                    ) : (
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                            {filterReceipts(overdueReceipts)?.map((receipt) => (
-                                <ReceiptCard
-                                    key={receipt.$id}
-                                    receipt={receipt}
-                                    selectedReceipt={selectedReceipt}
-                                    onSelect={() => setSelectedReceipt(receipt)}
-                                />
-                            ))}
-                        </div>
-                    )}
-                </TabsContent>
                 <TabsContent value="active" className="space-y-4">
                     {activeLoading ? (
                         <div className="flex justify-center py-8">
@@ -185,6 +161,31 @@ export default function ReturnPanel() {
                     ) : (
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                             {filterReceipts(returnedReceipts)?.map((receipt) => (
+                                <ReceiptCard
+                                    key={receipt.$id}
+                                    receipt={receipt}
+                                    selectedReceipt={selectedReceipt}
+                                    onSelect={() => setSelectedReceipt(receipt)}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </TabsContent>
+                
+                <TabsContent value="overdue" className="space-y-4">
+                    {overdueLoading ? (
+                        <div className="flex justify-center py-8">
+                            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                        </div>
+                    ) : filterReceipts(overdueReceipts)?.length === 0 ? (
+                        <Card className="p-8 text-center">
+                            <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-4" />
+                            <p className="text-lg font-semibold">No overdue items</p>
+                            <p className="text-muted-foreground">All your active borrows are within the due date</p>
+                        </Card>
+                    ) : (
+                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                            {filterReceipts(overdueReceipts)?.map((receipt) => (
                                 <ReceiptCard
                                     key={receipt.$id}
                                     receipt={receipt}
