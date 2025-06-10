@@ -14,7 +14,6 @@ interface BorrowTableHeaderProps {
     setPage: (page: number) => void;
     handleRefresh: () => void;
     isRefreshing: boolean;
-    selectedItems: Set<string>;
     onViewCart: () => void;
 }
 
@@ -24,7 +23,6 @@ export function BorrowTableHeader({
     setPage,
     handleRefresh,
     isRefreshing,
-    selectedItems,
     onViewCart,
 }: BorrowTableHeaderProps) {
     const [localSearch, setLocalSearch] = useState(searchTerm);

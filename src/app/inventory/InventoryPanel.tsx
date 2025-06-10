@@ -30,7 +30,7 @@ export default function InventoryPanel({ type }: { type?: string }) {
     const [search, setSearch] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
-    const [selectedItems] = useState<Set<string>>(new Set());
+
     const [selectedDetailItem, setSelectedDetailItem] = useState<ItemWithInventory | null>(null);
     const [showDetails, setShowDetails] = useState(false);
 
@@ -95,13 +95,13 @@ export default function InventoryPanel({ type }: { type?: string }) {
 
     useEffect(() => {
         loadItems(true);
-    }, [search]);
+    }, [search, loadItems]);
 
     useEffect(() => {
         if (page > 1) {
             loadItems();
         }
-    }, [page]);
+    }, [page, loadItems]);
 
     const handleRefresh = () => {
         setIsRefreshing(true);
@@ -128,7 +128,6 @@ export default function InventoryPanel({ type }: { type?: string }) {
                         setPage={setPage}
                         handleRefresh={handleRefresh}
                         isRefreshing={isRefreshing}
-                        selectedItems={selectedItems}
                         onViewCart={handleViewCart}
                     />
 

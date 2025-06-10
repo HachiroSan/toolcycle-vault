@@ -327,7 +327,7 @@ export default function ReceiptPage() {
         retry: 2,
     });
 
-    const returnConditions = returnConditionsData?.data || [];
+    const returnConditions = useMemo(() => returnConditionsData?.data || [], [returnConditionsData?.data]);
 
     // Helper function to get return condition for an item
     const getReturnedItemCondition = useCallback((itemId: string): ItemCondition | null => {
