@@ -1,7 +1,7 @@
 'use server';
 
 import { cookies } from 'next/headers';
-import { Query, Databases, Account } from 'node-appwrite';
+import { Query, Databases, Account, ID } from 'node-appwrite';
 import { createSessionClient } from '@/lib/appwrite/config';
 import {
     BorrowItem,
@@ -11,6 +11,7 @@ import {
     InventoryUpdate,
     ReturnBorrowRequest,
     ServiceResponse,
+    ItemReturnCondition,
 } from '@/data/borrow.type';
 
 // Helper function to handle unauthorized cases
@@ -122,6 +123,7 @@ export async function returnItems(
     const borrowItemsCollectionId = process.env.NEXT_PUBLIC_APPWRITE_BORROW_ITEMS_COLLECTION_ID!;
     const inventoryCollectionId = process.env.NEXT_PUBLIC_APPWRITE_INVENTORY_COLLECTION_ID!;
     const receiptsCollectionId = process.env.NEXT_PUBLIC_APPWRITE_BORROW_RECEIPTS_COLLECTION_ID!;
+    const returnConditionsCollectionId = 'item_return_conditions';
 
     try {
         // Get current user first
@@ -180,6 +182,21 @@ export async function returnItems(
                 borrowItemsCollectionId,
                 borrowItem.$id,
                 borrowItemUpdates
+            );
+
+            // Create item return condition record
+            await databases.createDocument<ItemReturnCondition>(
+                databaseId,
+                returnConditionsCollectionId,
+                ID.unique(),
+                {
+                    receiptId: receiptId,
+                    itemId: item.itemId,
+                    userId: requestUser.$id,
+                    condition: item.condition,
+                    quantity: item.quantity,
+                    notes: item.notes || null,
+                }
             );
 
             // Update receipt's returned quantities
@@ -279,6 +296,40 @@ export async function returnItems(
             ),
         ]);
 
+        return handleError(error);
+    }
+}
+
+/**
+ * Retrieves item return conditions for a specific receipt
+ * @param {string} receiptId - Receipt ID to get conditions for
+ * @returns {Promise<ServiceResponse<ItemReturnCondition[]>>} Array of return conditions
+ */
+export async function getReturnConditions(receiptId: string): Promise<ServiceResponse<ItemReturnCondition[]>> {
+    const client = await getSessionDatabases();
+    if (!client) return handleUnauthorized();
+
+    const { databases, account } = client;
+    const databaseId = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
+    const returnConditionsCollectionId = 'item_return_conditions';
+
+    try {
+        const requestUser = await account.get();
+        const conditions = await databases.listDocuments<ItemReturnCondition>(
+            databaseId,
+            returnConditionsCollectionId,
+            [
+                Query.equal('receiptId', receiptId),
+                Query.equal('userId', requestUser.$id),
+            ]
+        );
+
+        return {
+            success: true,
+            message: 'Return conditions retrieved successfully',
+            data: conditions.documents,
+        };
+    } catch (error) {
         return handleError(error);
     }
 }

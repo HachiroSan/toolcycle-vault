@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getReceipts } from '@/actions/return';
+import { getReceipts, getReturnConditions } from '@/actions/return';
 import { getItems } from '@/actions/inventory';
-import { BorrowReceipt } from '@/data/borrow.type';
+import { BorrowReceipt, ItemReturnCondition } from '@/data/borrow.type';
 import { BaseItem } from '@/data/inventory.type';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
@@ -16,6 +16,7 @@ import ReceiptDetailsDialog from './ReceiptDetailsDialog';
 export default function ReturnPanel() {
     const [selectedReceipt, setSelectedReceipt] = useState<BorrowReceipt | null>(null);
     const [receiptItems, setReceiptItems] = useState<BaseItem[]>([]);
+    const [receiptReturnConditions, setReceiptReturnConditions] = useState<ItemReturnCondition[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
 
     // Fetch active and returned receipts
@@ -63,17 +64,24 @@ export default function ReturnPanel() {
         refetchOnWindowFocus: false, // Prevent unnecessary refetches
     });
 
-    // Fetch items when a receipt is selected
+    // Fetch items and return conditions when a receipt is selected
     useEffect(() => {
-        const fetchItems = async () => {
+        const fetchData = async () => {
             if (selectedReceipt) {
-                const response = await getItems(selectedReceipt.item_ids);
-                if (response.success) {
-                    setReceiptItems(response.data || []);
+                // Fetch items
+                const itemsResponse = await getItems(selectedReceipt.item_ids);
+                if (itemsResponse.success) {
+                    setReceiptItems(itemsResponse.data || []);
+                }
+
+                // Fetch return conditions
+                const conditionsResponse = await getReturnConditions(selectedReceipt.$id);
+                if (conditionsResponse.success) {
+                    setReceiptReturnConditions(conditionsResponse.data || []);
                 }
             }
         };
-        fetchItems();
+        fetchData();
     }, [selectedReceipt]);
 
     // Filter receipts based on search term
@@ -201,8 +209,12 @@ export default function ReturnPanel() {
             <ReceiptDetailsDialog
                 receipt={selectedReceipt}
                 items={receiptItems}
-                onClose={() => setSelectedReceipt(null)}
+                onClose={() => {
+                    setSelectedReceipt(null);
+                    setReceiptReturnConditions([]);
+                }}
                 loading={!!selectedReceipt && receiptItems.length === 0}
+                returnConditions={receiptReturnConditions}
             />
         </div>
     );

@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo, memo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getReceipt, returnItems } from '@/actions/return';
+import { getReceipt, returnItems, getReturnConditions } from '@/actions/return';
 import { getItems } from '@/actions/inventory';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,10 +12,12 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft, Calendar, Package2, Book, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { BorrowReceipt, ReturnBorrowRequest } from '@/data/borrow.type';
+import { BorrowReceipt, ReturnBorrowRequest, ItemCondition } from '@/data/borrow.type';
 import { BaseItem } from '@/data/inventory.type';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -25,6 +27,8 @@ import Confetti from 'react-confetti';
 interface SelectedItemQuantity {
     itemId: string;
     quantity: number;
+    condition: ItemCondition;
+    notes?: string;
 }
 
 interface ItemCardProps {
@@ -33,7 +37,10 @@ interface ItemCardProps {
     remainingQuantity: number;
     onSelect: (itemId: string, checked: boolean) => void;
     onQuantityChange: (itemId: string, quantity: number) => void;
+    onConditionChange: (itemId: string, condition: ItemCondition) => void;
+    onNotesChange: (itemId: string, notes: string) => void;
     selectedItemQuantities: SelectedItemQuantity[];
+    returnedItemCondition?: ItemCondition | null;
 }
 
 interface QuantityInputProps {
@@ -44,6 +51,37 @@ interface QuantityInputProps {
 
 // Validation schemas
 const quantitySchema = z.number().int().min(1);
+
+// Utility function to get condition badge variant
+const getConditionBadgeVariant = (condition: ItemCondition) => {
+    switch (condition) {
+        case 'good':
+            return 'success';
+        case 'damaged_or_broken':
+            return 'warning';
+        case 'lost':
+        case 'missing':
+            return 'destructive';
+        default:
+            return 'secondary';
+    }
+};
+
+// Utility function to get condition display text
+const getConditionDisplayText = (condition: ItemCondition) => {
+    switch (condition) {
+        case 'good':
+            return 'Good';
+        case 'damaged_or_broken':
+            return 'Damaged/Broken';
+        case 'lost':
+            return 'Lost';
+        case 'missing':
+            return 'Missing';
+        default:
+            return condition;
+    }
+};
 
 // Quantity Input Component
 // Quantity Input Component
@@ -87,11 +125,15 @@ QuantityInput.displayName = 'QuantityInput';
 
 // Item Card Component
 const ItemCard = memo(
-    ({ item, isSelected, remainingQuantity, onSelect, onQuantityChange, selectedItemQuantities }: ItemCardProps) => {
-        const currentQuantity = useMemo(
-            () => selectedItemQuantities.find((sq) => sq.itemId === item.$id)?.quantity || remainingQuantity,
-            [selectedItemQuantities, item.$id, remainingQuantity]
+    ({ item, isSelected, remainingQuantity, onSelect, onQuantityChange, onConditionChange, onNotesChange, selectedItemQuantities, returnedItemCondition }: ItemCardProps) => {
+        const selectedItem = useMemo(
+            () => selectedItemQuantities.find((sq) => sq.itemId === item.$id),
+            [selectedItemQuantities, item.$id]
         );
+
+        const currentQuantity = selectedItem?.quantity || remainingQuantity;
+        const currentCondition = selectedItem?.condition || 'good';
+        const currentNotes = selectedItem?.notes || '';
 
         const isFullyReturned = remainingQuantity === 0;
 
@@ -122,7 +164,17 @@ const ItemCard = memo(
                     <div className="flex-1">
                         <div className="flex justify-between mb-2">
                             <p className="font-medium">{item.name}</p>
-                            <Badge variant="outline">{item.type}</Badge>
+                            {isSelected ? (
+                                <Badge variant={getConditionBadgeVariant(currentCondition)}>
+                                    {getConditionDisplayText(currentCondition)}
+                                </Badge>
+                            ) : isFullyReturned && returnedItemCondition ? (
+                                <Badge variant={getConditionBadgeVariant(returnedItemCondition)}>
+                                    {getConditionDisplayText(returnedItemCondition)}
+                                </Badge>
+                            ) : (
+                                <Badge variant="outline">{item.type}</Badge>
+                            )}
                         </div>
                         {item.description && <p className="text-sm text-muted-foreground mb-2">{item.description}</p>}
                         {!isFullyReturned && (
@@ -131,11 +183,46 @@ const ItemCard = memo(
                             </p>
                         )}
                         {isSelected && !isFullyReturned && (
-                            <QuantityInput
-                                currentQuantity={currentQuantity}
-                                maxQuantity={remainingQuantity}
-                                onChange={(value) => onQuantityChange(item.$id, value)}
-                            />
+                            <div className="space-y-3 mt-3">
+                                <QuantityInput
+                                    currentQuantity={currentQuantity}
+                                    maxQuantity={remainingQuantity}
+                                    onChange={(value) => onQuantityChange(item.$id, value)}
+                                />
+                                
+                                <div className="space-y-2">
+                                    <Label htmlFor={`condition-${item.$id}`} className="text-sm font-medium">
+                                        Item Condition
+                                    </Label>
+                                    <Select
+                                        value={currentCondition}
+                                        onValueChange={(value: ItemCondition) => onConditionChange(item.$id, value)}
+                                    >
+                                        <SelectTrigger className="w-full">
+                                            <SelectValue placeholder="Select condition" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="good">Good Condition</SelectItem>
+                                            <SelectItem value="damaged_or_broken">Damaged or Broken</SelectItem>
+                                            <SelectItem value="lost">Lost</SelectItem>
+                                            <SelectItem value="missing">Missing</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor={`notes-${item.$id}`} className="text-sm font-medium">
+                                        Notes (Optional)
+                                    </Label>
+                                    <Input
+                                        id={`notes-${item.$id}`}
+                                        placeholder="Add any additional notes..."
+                                        value={currentNotes}
+                                        onChange={(e) => onNotesChange(item.$id, e.target.value)}
+                                        className="w-full"
+                                    />
+                                </div>
+                            </div>
                         )}
                     </div>
                 </div>
@@ -228,6 +315,26 @@ export default function ReceiptPage() {
 
     const items = itemsData?.data || [];
 
+    const { data: returnConditionsData } = useQuery({
+        queryKey: ['returnConditions', receipt?.$id],
+        queryFn: async () => {
+            if (!receipt?.$id) return { data: [] };
+            const response = await getReturnConditions(receipt.$id);
+            return response.data ? { data: response.data } : { data: [] };
+        },
+        enabled: !!receipt?.$id,
+        staleTime: 30000,
+        retry: 2,
+    });
+
+    const returnConditions = returnConditionsData?.data || [];
+
+    // Helper function to get return condition for an item
+    const getReturnedItemCondition = useCallback((itemId: string): ItemCondition | null => {
+        const condition = returnConditions.find(rc => rc.itemId === itemId);
+        return condition?.condition || null;
+    }, [returnConditions]);
+
     // Memoized functions
     const getRemainingQuantity = useCallback(
         (itemId: string) => {
@@ -252,9 +359,33 @@ export default function ReceiptPage() {
                 updated[existing].quantity = quantity;
                 return updated;
             }
-            return [...prev, { itemId, quantity }];
+            return [...prev, { itemId, quantity, condition: 'good' as ItemCondition, notes: '' }];
         });
     }, []);
+
+    const handleConditionChange = useCallback((itemId: string, condition: ItemCondition) => {
+        setSelectedItemQuantities((prev) => {
+            const existing = prev.findIndex((item) => item.itemId === itemId);
+            if (existing >= 0) {
+                const updated = [...prev];
+                updated[existing].condition = condition;
+                return updated;
+            }
+            return [...prev, { itemId, quantity: getRemainingQuantity(itemId), condition, notes: '' }];
+        });
+    }, [getRemainingQuantity]);
+
+    const handleNotesChange = useCallback((itemId: string, notes: string) => {
+        setSelectedItemQuantities((prev) => {
+            const existing = prev.findIndex((item) => item.itemId === itemId);
+            if (existing >= 0) {
+                const updated = [...prev];
+                updated[existing].notes = notes;
+                return updated;
+            }
+            return [...prev, { itemId, quantity: getRemainingQuantity(itemId), condition: 'good' as ItemCondition, notes }];
+        });
+    }, [getRemainingQuantity]);
 
     // Return handler
     const handleReturn = async () => {
@@ -272,6 +403,8 @@ export default function ReceiptPage() {
                 return {
                     itemId,
                     quantity: quantitySchema.parse(quantity),
+                    condition: itemQuantity?.condition || 'good',
+                    notes: itemQuantity?.notes,
                 };
             });
 
@@ -308,6 +441,7 @@ export default function ReceiptPage() {
                 queryClient.invalidateQueries({ queryKey: ['receipt', params.receipt_id] }),
                 queryClient.invalidateQueries({ queryKey: ['items', receipt?.item_ids] }),
                 queryClient.invalidateQueries({ queryKey: ['receipts'] }),
+                queryClient.invalidateQueries({ queryKey: ['returnConditions', receipt.$id] }),
             ]);
 
             setSelectedItems([]);
@@ -407,6 +541,7 @@ export default function ReceiptPage() {
                                     {items?.map((item: BaseItem) => {
                                         const remainingQuantity = getRemainingQuantity(item.$id);
                                         const isSelected = selectedItems.includes(item.$id);
+                                        const returnedCondition = getReturnedItemCondition(item.$id);
 
                                         return (
                                             <ItemCard
@@ -416,7 +551,10 @@ export default function ReceiptPage() {
                                                 remainingQuantity={remainingQuantity}
                                                 onSelect={handleItemSelect}
                                                 onQuantityChange={handleQuantityChange}
+                                                onConditionChange={handleConditionChange}
+                                                onNotesChange={handleNotesChange}
                                                 selectedItemQuantities={selectedItemQuantities}
+                                                returnedItemCondition={returnedCondition}
                                             />
                                         );
                                     })}

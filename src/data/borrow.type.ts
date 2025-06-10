@@ -8,9 +8,23 @@ export interface CreateBorrowRequest {
     subject?: string;
     notes?: string;
 }
+
+export type ItemCondition = 'good' | 'damaged_or_broken' | 'lost' | 'missing';
+
 export interface ReturnBorrowRequest {
     itemId: string;
     quantity: number;
+    condition: ItemCondition;
+    notes?: string;
+}
+
+export interface ItemReturnCondition extends Models.Document {
+    receiptId: string;
+    itemId: string;
+    userId: string;
+    condition: ItemCondition;
+    quantity: number;
+    notes?: string;
 }
 
 export interface ServiceResponse<T = void> {
