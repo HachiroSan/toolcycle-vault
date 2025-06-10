@@ -1,45 +1,40 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { getItemsWithInventory } from '@/actions/inventory';
-import { InventoryItem } from './InventoryItem';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { ItemWithInventory } from '@/data/inventory.type';
-import { Search, SlidersHorizontal, RefreshCw, Package } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Separator } from '@/components/ui/separator';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Package } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
+import { BorrowTableHeader } from './BorrowTableHeader';
+import { BorrowTableContent } from './BorrowTableContent';
+import { BorrowTableFooter } from './BorrowTableFooter';
+import { BorrowItemDetailsDialog } from './BorrowItemDetailsDialog';
 
-const fadeIn = {
-    initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0 },
-    exit: { opacity: 0, y: 20 },
-};
+const ITEMS_PER_PAGE = 10;
 
-const containerVariants = {
-    hidden: { opacity: 0 },
-    show: {
-        opacity: 1,
-        transition: {
-            staggerChildren: 0.1,
-        },
-    },
-};
+interface InventoryResponse {
+    success: boolean;
+    message?: string;
+    data: ItemWithInventory[];
+    total: number;
+    hasMore: boolean;
+}
 
 export default function InventoryPanel({ type }: { type?: string }) {
-    const [items, setItems] = useState<ItemWithInventory[]>([]);
+    const [inventoryData, setInventoryData] = useState<InventoryResponse | undefined>(undefined);
     const [page, setPage] = useState(1);
     const [search, setSearch] = useState('');
-    const [hasMore, setHasMore] = useState(true);
     const [isLoading, setIsLoading] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
-    const [sortBy, setSortBy] = useState('name');
-    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+    const [selectedItems] = useState<Set<string>>(new Set());
+    const [selectedDetailItem, setSelectedDetailItem] = useState<ItemWithInventory | null>(null);
+    const [showDetails, setShowDetails] = useState(false);
+
+    const router = useRouter();
 
     // No items available message
     const NoItems = () => (
@@ -54,37 +49,38 @@ export default function InventoryPanel({ type }: { type?: string }) {
             <h3 className="text-xl font-semibold text-gray-900 mb-2">No items available</h3>
             <p className="text-gray-500 max-w-md mb-6">
                 {search
-                    ? "We couldn't find any items matching your search. Try adjusting your filters or search terms."
+                    ? "We couldn't find any items matching your search. Try adjusting your search terms."
                     : 'There are currently no items in the inventory. Check back later for updates.'}
             </p>
             <Button variant="outline" onClick={handleRefresh} className="gap-2">
-                <RefreshCw className="w-4 h-4" />
                 Refresh
             </Button>
         </motion.div>
     );
 
     const loadItems = useCallback(
-        async (reset = false) => {
+        async (resetPage = false) => {
             try {
                 setIsLoading(true);
+                const currentPage = resetPage ? 1 : page;
+                
                 const response = await getItemsWithInventory({
-                    page: reset ? 1 : page,
+                    page: currentPage,
+                    limit: ITEMS_PER_PAGE,
                     search,
-                    sortBy,
-                    sortDirection,
                     status: 'active',
                     type,
                 });
 
                 if (response.success && Array.isArray(response.data)) {
-                    setItems((prev) =>
-                        reset
-                            ? (response.data as ItemWithInventory[])
-                            : [...prev, ...(response.data as ItemWithInventory[])]
-                    );
-                    setHasMore(response.hasMore);
-                    if (reset) setPage(1);
+                    const totalItems = response.total || response.data.length;
+                    setInventoryData({
+                        success: true,
+                        data: response.data as ItemWithInventory[],
+                        total: totalItems,
+                        hasMore: response.hasMore || false,
+                    });
+                    if (resetPage) setPage(1);
                 }
             } catch (error) {
                 console.error('Error loading items:', error);
@@ -94,135 +90,81 @@ export default function InventoryPanel({ type }: { type?: string }) {
                 setIsRefreshing(false);
             }
         },
-        [page, search, sortBy, sortDirection]
+        [page, search, type]
     );
 
     useEffect(() => {
         loadItems(true);
-    }, [search, sortBy, sortDirection]);
+    }, [search]);
+
+    useEffect(() => {
+        if (page > 1) {
+            loadItems();
+        }
+    }, [page]);
 
     const handleRefresh = () => {
         setIsRefreshing(true);
-        setItems([]); // Clear existing items to show skeleton
+        setInventoryData(undefined);
         loadItems(true);
+    };
+
+    const handleViewCart = () => {
+        router.push('/cart');
+    };
+
+    const handleItemDetails = (item: ItemWithInventory) => {
+        setSelectedDetailItem(item);
+        setShowDetails(true);
     };
 
     return (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col min-h-screen">
             <Card className="m-4">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-2xl font-bold">Borrow your item</CardTitle>
-                    <Button variant="outline" size="icon" onClick={handleRefresh} disabled={isRefreshing}>
-                        <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                    </Button>
-                </CardHeader>
-                <CardContent>
-                    <motion.div
-                        initial={{ y: -20, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        className="flex flex-col sm:flex-row items-center justify-between gap-4"
-                    >
-                        <div className="relative flex-1 w-full max-w-md">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 h-4 w-4" />
-                            <Input
-                                placeholder="Search available items..."
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                className="pl-10 rounded-full border-2"
-                            />
-                        </div>
+                <CardContent className="p-6">
+                    <BorrowTableHeader
+                        searchTerm={search}
+                        setSearchTerm={setSearch}
+                        setPage={setPage}
+                        handleRefresh={handleRefresh}
+                        isRefreshing={isRefreshing}
+                        selectedItems={selectedItems}
+                        onViewCart={handleViewCart}
+                    />
 
-                        <Sheet>
-                            <SheetTrigger asChild>
-                                <Button variant="outline">
-                                    <SlidersHorizontal className="h-4 w-4 mr-2" />
-                                    Filters
-                                </Button>
-                            </SheetTrigger>
-                            <SheetContent>
-                                <SheetHeader>
-                                    <SheetTitle>Sort Options</SheetTitle>
-                                </SheetHeader>
-                                <div className="space-y-4 pt-4">
-                                    <Select value={sortBy} onValueChange={setSortBy}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Sort by" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="name">Name</SelectItem>
-                                            <SelectItem value="quantity">Availability</SelectItem>
-                                            <SelectItem value="date">Date Added</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => setSortDirection((d) => (d === 'asc' ? 'desc' : 'asc'))}
-                                        className="w-full"
-                                    >
-                                        Sort {sortDirection === 'asc' ? 'A to Z' : 'Z to A'}
-                                    </Button>
-                                </div>
-                            </SheetContent>
-                        </Sheet>
-                    </motion.div>
+                    {isLoading && !inventoryData ? (
+                        <BorrowTableContent 
+                            isLoading={true} 
+                            inventoryData={undefined} 
+                            onItemDetails={handleItemDetails}
+                        />
+                    ) : inventoryData?.data?.length === 0 ? (
+                        <NoItems />
+                    ) : (
+                        <BorrowTableContent
+                            isLoading={isLoading}
+                            inventoryData={inventoryData}
+                            onItemDetails={handleItemDetails}
+                        />
+                    )}
 
-                    <Separator className="my-6" />
-
-                    <AnimatePresence mode="wait">
-                        {(isLoading && items.length === 0) || isRefreshing ? (
-                            <motion.div
-                                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-                                variants={containerVariants}
-                                initial="hidden"
-                                animate="show"
-                            >
-                                {[...Array(6)].map((_, i) => (
-                                    <Skeleton key={i} className="h-[200px] w-full rounded-xl" />
-                                ))}
-                            </motion.div>
-                        ) : items.length === 0 ? (
-                            <NoItems />
-                        ) : (
-                            <motion.div
-                                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-                                variants={containerVariants}
-                                initial="hidden"
-                                animate="show"
-                            >
-                                {items.map((item) => (
-                                    <motion.div
-                                        key={item.$id}
-                                        variants={fadeIn}
-                                        whileHover={{ scale: 1.02 }}
-                                        transition={{ type: 'spring', stiffness: 300 }}
-                                    >
-                                        <InventoryItem item={item} />
-                                    </motion.div>
-                                ))}
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-
-                    {hasMore && (
-                        <motion.div
-                            className="mt-8 flex justify-center"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.2 }}
-                        >
-                            <Button
-                                onClick={() => setPage((p) => p + 1)}
-                                disabled={isLoading || isRefreshing}
-                                variant="outline"
-                                size="lg"
-                                className="min-w-[200px] rounded-full hover:shadow-lg transition-shadow"
-                            >
-                                {isLoading ? 'Loading...' : 'Load More Items'}
-                            </Button>
-                        </motion.div>
+                    {inventoryData && inventoryData.total > 0 && (
+                        <BorrowTableFooter
+                            page={page}
+                            setPage={setPage}
+                            totalItems={inventoryData.total}
+                            itemsPerPage={ITEMS_PER_PAGE}
+                            isLoading={isLoading}
+                        />
                     )}
                 </CardContent>
             </Card>
+
+            <BorrowItemDetailsDialog
+                item={selectedDetailItem}
+                isOpen={showDetails}
+                onClose={() => setShowDetails(false)}
+            />
         </motion.div>
     );
 }
