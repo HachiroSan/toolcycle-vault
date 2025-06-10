@@ -18,6 +18,8 @@ import {
     Minus,
     Plus,
     ZoomIn,
+    X,
+    Check,
 } from 'lucide-react';
 import { CldImage } from 'next-cloudinary';
 import { ItemWithInventory } from '@/data/inventory.type';
@@ -45,7 +47,6 @@ interface BorrowTableContentProps {
 
 export function BorrowTableContent({ isLoading, inventoryData, onItemDetails }: BorrowTableContentProps) {
     const { addToCart, removeFromCart, updateQuantity, state } = useCart();
-    const [hoveringItems, setHoveringItems] = useState<Set<string>>(new Set());
     const [imagePreview, setImagePreview] = useState<{
         isOpen: boolean;
         imageUrl: string | null;
@@ -91,17 +92,7 @@ export function BorrowTableContent({ isLoading, inventoryData, onItemDetails }: 
         }
     };
 
-    const setHovering = (itemId: string, isHovering: boolean) => {
-        setHoveringItems((prev) => {
-            const newSet = new Set(prev);
-            if (isHovering) {
-                newSet.add(itemId);
-            } else {
-                newSet.delete(itemId);
-            }
-            return newSet;
-        });
-    };
+
 
     const handleImageClick = (imageUrl: string, itemName: string) => {
         setImagePreview({
@@ -180,7 +171,6 @@ export function BorrowTableContent({ isLoading, inventoryData, onItemDetails }: 
                         const cartItem = getCartItem(item.$id);
                         const itemBooked = isBooked(item.$id);
                         const isAvailable = item.inventory.available_quantity > 0;
-                        const isHovering = hoveringItems.has(item.$id);
 
                         return (
                             <TableRow key={item.$id} className="hover:bg-muted/50">
@@ -346,44 +336,32 @@ export function BorrowTableContent({ isLoading, inventoryData, onItemDetails }: 
                                             </AnimatePresence>
                                         </div>
 
-                                        <Button
-                                            onClick={() => handleBooking(item)}
-                                            disabled={!isAvailable && !itemBooked}
-                                            className={cn(
-                                                'transition-all duration-200 min-w-[100px] flex-shrink-0',
-                                                itemBooked && !isHovering && 'bg-green-600 hover:bg-green-700',
-                                                itemBooked && isHovering && 'bg-destructive hover:bg-destructive/90'
-                                            )}
-                                            onMouseEnter={() => setHovering(item.$id, true)}
-                                            onMouseLeave={() => setHovering(item.$id, false)}
-                                        >
-                                            <AnimatePresence mode="wait">
-                                                <motion.div
-                                                    key={`${itemBooked}-${isHovering}`}
-                                                    initial={{ opacity: 0, y: 10 }}
-                                                    animate={{ opacity: 1, y: 0 }}
-                                                    exit={{ opacity: 0, y: -10 }}
-                                                    transition={{ duration: 0.15 }}
-                                                    className="flex items-center gap-2"
+                                        {itemBooked ? (
+                                            <div className="flex items-center gap-1">
+                                                <div className="flex items-center gap-2 bg-green-50 text-green-700 px-3 py-2 rounded-md border border-green-200 min-w-[80px] justify-center">
+                                                    <Check className="h-4 w-4" />
+                                                    <span className="text-sm font-medium">Booked</span>
+                                                </div>
+                                                <Button
+                                                    onClick={() => handleBooking(item)}
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="h-9 w-9 p-0 border-red-200 hover:bg-red-50 hover:border-red-300 text-red-600 hover:text-red-700 flex-shrink-0"
+                                                    title="Remove from cart"
                                                 >
-                                                    {itemBooked ? (
-                                                        isHovering ? (
-                                                            <>Cancel</>
-                                                        ) : (
-                                                            <>
-                                                                <ShoppingCart className="h-4 w-4" />
-                                                                Booked
-                                                            </>
-                                                        )
-                                                    ) : (
-                                                        <>
-                                                            <ShoppingCart className="h-4 w-4" />
-                                                            Book
-                                                        </>
-                                                    )}
-                                                </motion.div>
-                                            </AnimatePresence>
-                                        </Button>
+                                                    <X className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        ) : (
+                                            <Button
+                                                onClick={() => handleBooking(item)}
+                                                disabled={!isAvailable}
+                                                className="min-w-[80px] flex-shrink-0 hover:bg-primary/90 transition-colors duration-200"
+                                            >
+                                                <ShoppingCart className="h-4 w-4 mr-2" />
+                                                Book
+                                            </Button>
+                                        )}
                                     </div>
                                 </TableCell>
                             </TableRow>
