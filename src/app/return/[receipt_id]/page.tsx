@@ -75,9 +75,8 @@ const getConditionDisplayText = (condition: ItemCondition) => {
         case 'damaged_or_broken':
             return 'Damaged/Broken';
         case 'lost':
-            return 'Lost';
         case 'missing':
-            return 'Missing';
+            return 'Lost or Missing';
         default:
             return condition;
     }
@@ -204,8 +203,7 @@ const ItemCard = memo(
                                         <SelectContent>
                                             <SelectItem value="good">Good Condition</SelectItem>
                                             <SelectItem value="damaged_or_broken">Damaged or Broken</SelectItem>
-                                            <SelectItem value="lost">Lost</SelectItem>
-                                            <SelectItem value="missing">Missing</SelectItem>
+                                            <SelectItem value="lost">Lost or Missing</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
