@@ -68,8 +68,8 @@ export default function MigrateCategoriesPage() {
                         </CardTitle>
                         <CardDescription>
                             This tool will add default categories to existing items in your inventory.
-                            Items with type "turning" will get "General Turning" category, and items with 
-                            type "milling" will get "Flat end mill" category. Items with other types will 
+                            Items with type &quot;turning&quot; will get &quot;General Turning&quot; category, and items with 
+                            type &quot;milling&quot; will get &quot;Flat end mill&quot; category. Items with other types will 
                             remain unchanged.
                         </CardDescription>
                     </CardHeader>
@@ -77,8 +77,8 @@ export default function MigrateCategoriesPage() {
                         <Alert>
                             <AlertCircle className="h-4 w-4" />
                             <AlertDescription>
-                                <strong>Important:</strong> This migration will only update items that don't 
-                                already have a category. It's safe to run multiple times.
+                                <strong>Important:</strong> This migration will only update items that don&apos;t 
+                                already have a category. It&apos;s safe to run multiple times.
                             </AlertDescription>
                         </Alert>
 
@@ -87,11 +87,11 @@ export default function MigrateCategoriesPage() {
                             <div className="grid gap-3 text-sm">
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">Turning items:</span>
-                                    <span>Will get "General Turning" category</span>
+                                    <span>Will get &quot;General Turning&quot; category</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">Milling items:</span>
-                                    <span>Will get "Flat end mill" category</span>
+                                    <span>Will get &quot;Flat end mill&quot; category</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">Other items:</span>

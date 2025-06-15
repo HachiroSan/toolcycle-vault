@@ -48,12 +48,13 @@ export interface BaseItem extends Document {
     type: string;
     category?: string | null;
     size?: string | null;
-    diameter?: number | null;
-    flute?: number | null;
+    length?: number | null;
+    brand?: string | null;
     coating?: string | null;
     material?: string | null;
     description?: string | null;
     image_url?: string | null;
+    is_deleted?: boolean;
 }
 
 // Request interface (without Document properties)
@@ -62,8 +63,8 @@ export interface CreateItemRequest {
     type: string;
     category?: string | null;
     size?: string | null;
-    diameter?: number | null;
-    flute?: number | null;
+    length?: number | null;
+    brand?: string | null;
     coating?: string | null;
     material?: string | null;
     description?: string | null;
@@ -77,6 +78,7 @@ export interface InventoryDocument extends Document {
     total_quantity: number;
     total_borrowed: number;
     available_quantity: number;
+    is_deleted?: boolean;
 }
 
 // Full item response with inventory data
@@ -95,8 +97,8 @@ export interface EditItemWithInventoryRequest {
     type?: string;
     category?: string | null;
     size?: string | null;
-    diameter?: number | null;
-    flute?: number | null;
+    length?: number | null;
+    brand?: string | null;
     coating?: string | null;
     material?: string | null;
     description?: string | null;

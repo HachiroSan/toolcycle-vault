@@ -101,11 +101,11 @@ export default function InventoryPanel({ type }: { type?: string }) {
     useEffect(() => {
         setPage(1);
         loadItems(true);
-    }, [search, type, category]);
+    }, [search, type, category, loadItems]);
 
     useEffect(() => {
         loadItems();
-    }, [page]);
+    }, [page, loadItems]);
 
     const handleRefresh = () => {
         setIsRefreshing(true);

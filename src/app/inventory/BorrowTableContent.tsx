@@ -210,13 +210,13 @@ export function BorrowTableContent({ isLoading, inventoryData, onItemDetails }: 
                                     </Badge>
                                 </TableCell>
                                 <TableCell className="text-center">
-                                    <div className="font-medium">{item.diameter ? `⌀${item.diameter}mm` : '-'}</div>
+                                    <div className="font-medium">{item.length ? `L${item.length}mm` : '-'}</div>
                                 </TableCell>
                                 <TableCell className="text-center">
                                     <div className="font-medium">{item.coating || '-'}</div>
                                 </TableCell>
                                 <TableCell className="text-center">
-                                    <div className="font-medium">{item.flute || '-'}</div>
+                                    <div className="font-medium">{item.brand || '-'}</div>
                                 </TableCell>
                                 <TableCell className="max-w-[200px] text-center">
                                     {item.description ? (

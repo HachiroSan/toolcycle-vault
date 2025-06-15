@@ -173,7 +173,7 @@ export function Receipt({ data, items }: ReceiptProps) {
                                                         )}
                                                         <div className="flex gap-2 text-sm text-muted-foreground">
                                                             {item.type && <span>{item.type}</span>}
-                                                            {item.diameter && <span>• ⌀{item.diameter}mm</span>}
+                                                            {item.length && <span>• L{item.length}mm</span>}
                                                             {item.size && <span>• {item.size}</span>}
                                                         </div>
                                                     </div>

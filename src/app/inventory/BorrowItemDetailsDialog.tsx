@@ -76,8 +76,8 @@ export function BorrowItemDetailsDialog({ item, isOpen, onClose }: BorrowItemDet
                             <div className="space-y-3">
                                 <div className="flex items-center gap-2">
                                     <RulerIcon className="h-4 w-4 text-muted-foreground" />
-                                    <span className="font-medium">Diameter:</span>
-                                    <span>{item.diameter ? `⌀${item.diameter}mm` : '-'}</span>
+                                    <span className="font-medium">Length:</span>
+                                    <span>{item.length ? `L${item.length}mm` : '-'}</span>
                                 </div>
 
                                 <div className="flex items-center gap-2">
@@ -94,11 +94,11 @@ export function BorrowItemDetailsDialog({ item, isOpen, onClose }: BorrowItemDet
                                     </div>
                                 )}
 
-                                {item.flute && (
+                                {item.brand && (
                                     <div className="flex items-center gap-2">
                                         <Building2 className="h-4 w-4 text-muted-foreground" />
-                                        <span className="font-medium">Flute Count:</span>
-                                        <span>{item.flute}</span>
+                                        <span className="font-medium">Brand:</span>
+                                        <span>{item.brand}</span>
                                     </div>
                                 )}
                             </div>

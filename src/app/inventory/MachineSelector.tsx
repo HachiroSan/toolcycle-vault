@@ -44,7 +44,7 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({ machineType, onBack
                 Select {machineType.charAt(0).toUpperCase() + machineType.slice(1)} Category
             </h3>
             <p className="text-muted-foreground mb-6">
-                Choose the specific category for {machineType} tools you're looking for.
+                Choose the specific category for {machineType} tools you&apos;re looking for.
             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
