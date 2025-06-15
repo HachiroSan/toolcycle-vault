@@ -8,7 +8,7 @@ import { ItemWithInventory } from '@/data/inventory.type';
 import { Package } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { BorrowTableHeader } from './BorrowTableHeader';
 import { BorrowTableContent } from './BorrowTableContent';
 import { BorrowTableFooter } from './BorrowTableFooter';
@@ -35,6 +35,8 @@ export default function InventoryPanel({ type }: { type?: string }) {
     const [showDetails, setShowDetails] = useState(false);
 
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const category = searchParams.get('category') || '';
 
     // No items available message
     const NoItems = () => (
@@ -50,6 +52,8 @@ export default function InventoryPanel({ type }: { type?: string }) {
             <p className="text-gray-500 max-w-md mb-6">
                 {search
                     ? "We couldn't find any items matching your search. Try adjusting your search terms."
+                    : category
+                    ? `There are currently no items in the ${category} category. Check back later for updates.`
                     : 'There are currently no items in the inventory. Check back later for updates.'}
             </p>
             <Button variant="outline" onClick={handleRefresh} className="gap-2">
@@ -70,6 +74,7 @@ export default function InventoryPanel({ type }: { type?: string }) {
                     search,
                     status: 'active',
                     type,
+                    category,
                 });
 
                 if (response.success && Array.isArray(response.data)) {
@@ -90,13 +95,13 @@ export default function InventoryPanel({ type }: { type?: string }) {
                 setIsRefreshing(false);
             }
         },
-        [page, search, type]
+        [page, search, type, category]
     );
 
     useEffect(() => {
         setPage(1);
         loadItems(true);
-    }, [search, type]);
+    }, [search, type, category]);
 
     useEffect(() => {
         loadItems();

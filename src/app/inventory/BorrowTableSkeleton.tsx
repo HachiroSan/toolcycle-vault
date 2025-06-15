@@ -39,7 +39,7 @@ export function BorrowTableSkeleton() {
                         <TableCell className="text-center">
                             <div className="flex items-center justify-center space-x-2">
                                 <Building2 className="h-4 w-4 text-muted-foreground/70" />
-                                <span className="text-muted-foreground/70">Brand</span>
+                                <span className="text-muted-foreground/70">Diameter</span>
                             </div>
                         </TableCell>
                         <TableCell className="text-center">
@@ -51,7 +51,7 @@ export function BorrowTableSkeleton() {
                         <TableCell className="text-center">
                             <div className="flex items-center justify-center space-x-2">
                                 <RulerIcon className="h-4 w-4 text-muted-foreground/70" />
-                                <span className="text-muted-foreground/70">Length</span>
+                                <span className="text-muted-foreground/70">Flute</span>
                             </div>
                         </TableCell>
                         <TableCell className="text-center">

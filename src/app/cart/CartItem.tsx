@@ -17,7 +17,7 @@ interface InventoryItem {
 interface CartItemDetailsProps {
     description?: string | null;
     type?: string;
-    brand?: string | null;
+    diameter?: number | null;
     size?: string | null;
 }
 
@@ -119,7 +119,7 @@ export function CartItem({ item, itemDetails, quantity, onUpdate, onRemove }: Ca
                                 )}
                                 <div className="flex gap-4 text-sm">
                                     {itemDetails.type && <span>Type: {itemDetails.type}</span>}
-                                    {itemDetails.brand && <span>Brand: {itemDetails.brand}</span>}
+                                    {itemDetails.diameter && <span>⌀{itemDetails.diameter}mm</span>}
                                     {itemDetails.size && <span>Size: {itemDetails.size}</span>}
                                 </div>
                             </CollapsibleContent>

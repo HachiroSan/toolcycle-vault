@@ -12,6 +12,26 @@ export interface GetItemsParams {
     search?: string;
 }
 
+// Define categories for machine types
+export const TURNING_CATEGORIES = [
+    'General Turning',
+    'Threading',
+    'Grooving Parting',
+    'Boring',
+    'Drill / Tap'
+] as const;
+
+export const MILLING_CATEGORIES = [
+    'Flat end mill',
+    'Ball nose end mill',
+    'Face mill',
+    'Chamfer mill',
+    'Drill bit'
+] as const;
+
+export type TurningCategory = (typeof TURNING_CATEGORIES)[number];
+export type MillingCategory = (typeof MILLING_CATEGORIES)[number];
+
 // Base Document interface
 export interface Document {
     $id: string;
@@ -26,9 +46,10 @@ export interface Document {
 export interface BaseItem extends Document {
     name: string;
     type: string;
+    category?: string | null;
     size?: string | null;
-    length?: number | null;
-    brand?: string | null;
+    diameter?: number | null;
+    flute?: number | null;
     coating?: string | null;
     material?: string | null;
     description?: string | null;
@@ -39,9 +60,10 @@ export interface BaseItem extends Document {
 export interface CreateItemRequest {
     name: string;
     type: string;
+    category?: string | null;
     size?: string | null;
-    length?: number | null;
-    brand?: string | null;
+    diameter?: number | null;
+    flute?: number | null;
     coating?: string | null;
     material?: string | null;
     description?: string | null;
@@ -71,9 +93,10 @@ export interface EditItemWithInventoryRequest {
     // Base item properties
     name?: string;
     type?: string;
+    category?: string | null;
     size?: string | null;
-    length?: number | null;
-    brand?: string | null;
+    diameter?: number | null;
+    flute?: number | null;
     coating?: string | null;
     material?: string | null;
     description?: string | null;
@@ -86,9 +109,10 @@ export const inventoryItemSchema = z.object({
     $id: z.string(),
     name: z.string().min(2, 'Name must be at least 2 characters'),
     type: z.string().min(2, 'Type must be at least 2 characters'),
+    category: z.string().optional().nullable(),
     size: z.string().optional().nullable(),
-    length: z.number().optional().nullable(),
-    brand: z.string().optional().nullable(),
+    diameter: z.number().optional().nullable(),
+    flute: z.number().min(1, 'Flute count must be at least 1').max(20, 'Flute count must be at most 20').optional().nullable(),
     coating: z.string().optional().nullable(),
     material: z.string().optional().nullable(),
     description: z.string().optional().nullable(),

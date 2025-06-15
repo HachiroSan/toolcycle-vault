@@ -85,10 +85,10 @@ export function InventoryItem({ item }: { item: ItemWithInventory }) {
                         <div>
                             <h3 className="text-xl font-bold">{item.name}</h3>
                             <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                                {item.brand && (
+                                {item.diameter && (
                                     <div className="flex items-center gap-1">
                                         <Wrench className="h-4 w-4" />
-                                        <span>{item.brand}</span>
+                                        <span>⌀{item.diameter}mm</span>
                                     </div>
                                 )}
                                 {item.type && <span>• {item.type}</span>}

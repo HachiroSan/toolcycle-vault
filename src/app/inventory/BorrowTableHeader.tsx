@@ -2,11 +2,13 @@
 
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { RefreshCw, Search, ShoppingCart } from 'lucide-react';
+import { RefreshCw, Search, ShoppingCart, X, Tag } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { useCart } from '@/hooks/useCart';
+import { Badge } from '@/components/ui/badge';
+import { useRouter } from 'next/navigation';
 
 interface BorrowTableHeaderProps {
     searchTerm: string;
@@ -15,6 +17,8 @@ interface BorrowTableHeaderProps {
     handleRefresh: () => void;
     isRefreshing: boolean;
     onViewCart: () => void;
+    currentCategory?: string;
+    machineType?: string;
 }
 
 export function BorrowTableHeader({
@@ -24,21 +28,50 @@ export function BorrowTableHeader({
     handleRefresh,
     isRefreshing,
     onViewCart,
+    currentCategory,
+    machineType,
 }: BorrowTableHeaderProps) {
     const [localSearch, setLocalSearch] = useState(searchTerm);
     const debouncedSearch = useDebounce(localSearch, 300);
     const { state } = useCart();
+    const router = useRouter();
 
     useEffect(() => {
         setSearchTerm(debouncedSearch);
         setPage(1);
     }, [debouncedSearch, setSearchTerm, setPage]);
 
+    const handleClearCategory = () => {
+        if (machineType) {
+            router.push(`/inventory/${machineType}`);
+        }
+    };
+
     return (
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
             <div className="space-y-6">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <h2 className="text-2xl font-bold">Borrow your item</h2>
+                    <div className="flex flex-col gap-2">
+                        <h2 className="text-2xl font-bold">Borrow your item</h2>
+                        {currentCategory && (
+                            <div className="flex items-center gap-2">
+                                <Tag className="h-4 w-4 text-muted-foreground" />
+                                <Badge variant="secondary" className="gap-2">
+                                    {currentCategory}
+                                    <button
+                                        onClick={handleClearCategory}
+                                        className="ml-1 hover:bg-destructive/20 rounded-full p-1"
+                                        aria-label="Clear category filter"
+                                    >
+                                        <X className="h-3 w-3" />
+                                    </button>
+                                </Badge>
+                                <span className="text-sm text-muted-foreground">
+                                    in {machineType} tools
+                                </span>
+                            </div>
+                        )}
+                    </div>
                     <div className="flex flex-wrap gap-2">
                         <Button
                             variant="outline"

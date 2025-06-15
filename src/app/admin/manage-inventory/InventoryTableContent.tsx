@@ -21,6 +21,7 @@ import {
     Paintbrush,
     RulerIcon,
     GalleryThumbnails,
+    Layers,
 } from 'lucide-react';
 import {
     AlertDialog,
@@ -135,20 +136,26 @@ export function InventoryTableContent({
                         </TableCell>
                         <TableCell className="text-center">
                             <div className="flex items-center justify-center space-x-2">
+                                <Layers className="h-4 w-4 text-muted-foreground" />
+                                <span>Category</span>
+                            </div>
+                        </TableCell>
+                        <TableCell className="text-center">
+                            <div className="flex items-center justify-center space-x-2">
+                                <RulerIcon className="h-4 w-4 text-muted-foreground" />
+                                <span>Diameter</span>
+                            </div>
+                        </TableCell>
+                        <TableCell className="text-center">
+                            <div className="flex items-center justify-center space-x-2">
                                 <Building2 className="h-4 w-4 text-muted-foreground" />
-                                <span>Brand</span>
+                                <span>Flute</span>
                             </div>
                         </TableCell>
                         <TableCell className="text-center">
                             <div className="flex items-center justify-center space-x-2">
                                 <Paintbrush className="h-4 w-4 text-muted-foreground" />
                                 <span>Coating</span>
-                            </div>
-                        </TableCell>
-                        <TableCell className="text-center">
-                            <div className="flex items-center justify-center space-x-2">
-                                <RulerIcon className="h-4 w-4 text-muted-foreground" />
-                                <span>Length</span>
                             </div>
                         </TableCell>
                         <TableCell className="text-center">
@@ -191,13 +198,22 @@ export function InventoryTableContent({
                                 </Badge>
                             </TableCell>
                             <TableCell className="text-center">
-                                <div className="font-medium">{item.brand}</div>
+                                {item.category ? (
+                                    <Badge variant="outline" className="text-xs">
+                                        {item.category}
+                                    </Badge>
+                                ) : (
+                                    <span className="text-muted-foreground text-sm">-</span>
+                                )}
                             </TableCell>
                             <TableCell className="text-center">
-                                <div className="font-medium">{item.coating}</div>
+                                <div className="font-medium">{item.diameter ? `${item.diameter}mm` : '-'}</div>
                             </TableCell>
                             <TableCell className="text-center">
-                                <div className="font-medium">{item.length}</div>
+                                <div className="font-medium">{item.flute || '-'}</div>
+                            </TableCell>
+                            <TableCell className="text-center">
+                                <div className="font-medium">{item.coating || '-'}</div>
                             </TableCell>
                             <TableCell className="max-w-[300px] text-center">
                                 {item.description && (

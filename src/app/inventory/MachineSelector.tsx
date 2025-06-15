@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle, ChevronLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { TURNING_CATEGORIES, MILLING_CATEGORIES } from '@/data/inventory.type';
 
 const TurningMachineSvg = () => (
     <svg xmlns="http://www.w3.org/2000/svg" width={100} height={125} viewBox="0 0 1600 1690">
@@ -19,51 +21,78 @@ const MillingMachineSvg = () => (
     </svg>
 );
 
-const MachineTypeSelector: React.FC = () => {
-    const [selected, setSelected] = useState('turning');
+interface CategorySelectorProps {
+    machineType: 'turning' | 'milling';
+    onBack: () => void;
+}
 
-    const machines = [
-        { value: 'turning', label: 'Turning', icon: TurningMachineSvg },
-        { value: 'milling', label: 'Milling', icon: MillingMachineSvg },
-        { value: 'all', label: 'All', icon: HelpCircle },
-    ];
+const CategorySelector: React.FC<CategorySelectorProps> = ({ machineType, onBack }) => {
+    const [selectedCategory, setSelectedCategory] = useState<string>('');
+
+    const categories = machineType === 'turning' ? TURNING_CATEGORIES : MILLING_CATEGORIES;
 
     return (
         <div className="w-full max-w-4xl mx-auto p-6">
-            <h3 className="text-2xl font-semibold text-foreground mb-6">Select Machine Type</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {machines.map((machine) => (
+            <div className="flex items-center gap-4 mb-6">
+                <Button variant="ghost" size="sm" onClick={onBack} className="gap-2">
+                    <ChevronLeft className="h-4 w-4" />
+                    Back
+                </Button>
+            </div>
+            
+            <h3 className="text-2xl font-semibold text-foreground mb-2">
+                Select {machineType.charAt(0).toUpperCase() + machineType.slice(1)} Category
+            </h3>
+            <p className="text-muted-foreground mb-6">
+                Choose the specific category for {machineType} tools you're looking for.
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <Link
+                    href={`/inventory/${machineType}`}
+                    className="block"
+                >
+                    <Card
+                        className={cn(
+                            'p-6 cursor-pointer transition-all duration-300',
+                            'border-2 hover:shadow-lg hover:border-primary/50',
+                            'group relative overflow-hidden'
+                        )}
+                    >
+                        <div className="flex flex-col items-center justify-center min-h-[120px] gap-4 text-center">
+                            <h4 className="text-lg font-medium text-foreground group-hover:text-primary transition-colors">
+                                All Categories
+                            </h4>
+                            <p className="text-sm text-muted-foreground">
+                                View all {machineType} tools
+                            </p>
+                        </div>
+                    </Card>
+                </Link>
+                
+                {categories.map((category) => (
                     <Link
-                        key={machine.value}
-                        href={`/inventory/${machine.value}`}
+                        key={category}
+                        href={`/inventory/${machineType}?category=${encodeURIComponent(category)}`}
                         className="block"
-                        onMouseEnter={() => setSelected(machine.value)}
+                        onMouseEnter={() => setSelectedCategory(category)}
                     >
                         <Card
                             className={cn(
                                 'p-6 cursor-pointer transition-all duration-300',
                                 'border-2 hover:shadow-lg',
                                 'group relative overflow-hidden',
-                                selected === machine.value ? 'border-primary bg-primary/5' : 'hover:border-primary/50'
+                                selectedCategory === category ? 'border-primary bg-primary/5' : 'hover:border-primary/50'
                             )}
                         >
-                            <div className="flex flex-col items-center justify-center min-h-[200px] gap-6 text-center">
-                                <div
-                                    className={cn(
-                                        'transition-all duration-300 p-3 rounded-full',
-                                        'group-hover:bg-primary/10',
-                                        selected === machine.value ? 'text-primary' : 'text-muted-foreground'
-                                    )}
-                                >
-                                    <machine.icon className="w-12 h-12" />
-                                </div>
+                            <div className="flex flex-col items-center justify-center min-h-[120px] gap-4 text-center">
                                 <h4
                                     className={cn(
                                         'text-lg font-medium transition-colors duration-300',
-                                        selected === machine.value ? 'text-primary' : 'text-foreground'
+                                        selectedCategory === category ? 'text-primary' : 'text-foreground group-hover:text-primary'
                                     )}
                                 >
-                                    {machine.label}
+                                    {category}
                                 </h4>
                             </div>
                             <div
@@ -74,6 +103,113 @@ const MachineTypeSelector: React.FC = () => {
                             />
                         </Card>
                     </Link>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+const MachineTypeSelector: React.FC = () => {
+    const [selected, setSelected] = useState('turning');
+    const [showCategories, setShowCategories] = useState<'turning' | 'milling' | null>(null);
+
+    const machines = [
+        { value: 'turning', label: 'Turning', icon: TurningMachineSvg },
+        { value: 'milling', label: 'Milling', icon: MillingMachineSvg },
+        { value: 'all', label: 'All', icon: HelpCircle },
+    ];
+
+    if (showCategories) {
+        return <CategorySelector machineType={showCategories} onBack={() => setShowCategories(null)} />;
+    }
+
+    return (
+        <div className="w-full max-w-4xl mx-auto p-6">
+            <h3 className="text-2xl font-semibold text-foreground mb-6">Select Machine Type</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {machines.map((machine) => (
+                    <div key={machine.value}>
+                        {machine.value === 'all' ? (
+                            <Link href={`/inventory/${machine.value}`} className="block">
+                                <Card
+                                    className={cn(
+                                        'p-6 cursor-pointer transition-all duration-300',
+                                        'border-2 hover:shadow-lg',
+                                        'group relative overflow-hidden',
+                                        selected === machine.value ? 'border-primary bg-primary/5' : 'hover:border-primary/50'
+                                    )}
+                                    onMouseEnter={() => setSelected(machine.value)}
+                                >
+                                    <div className="flex flex-col items-center justify-center min-h-[200px] gap-6 text-center">
+                                        <div
+                                            className={cn(
+                                                'transition-all duration-300 p-3 rounded-full',
+                                                'group-hover:bg-primary/10',
+                                                selected === machine.value ? 'text-primary' : 'text-muted-foreground'
+                                            )}
+                                        >
+                                            <machine.icon className="w-12 h-12" />
+                                        </div>
+                                        <h4
+                                            className={cn(
+                                                'text-lg font-medium transition-colors duration-300',
+                                                selected === machine.value ? 'text-primary' : 'text-foreground'
+                                            )}
+                                        >
+                                            {machine.label}
+                                        </h4>
+                                    </div>
+                                    <div
+                                        className={cn(
+                                            'absolute inset-0 border-2 border-primary/0 rounded-lg transition-all duration-300',
+                                            'group-hover:border-primary/50'
+                                        )}
+                                    />
+                                </Card>
+                            </Link>
+                        ) : (
+                            <Card
+                                className={cn(
+                                    'p-6 cursor-pointer transition-all duration-300',
+                                    'border-2 hover:shadow-lg',
+                                    'group relative overflow-hidden',
+                                    selected === machine.value ? 'border-primary bg-primary/5' : 'hover:border-primary/50'
+                                )}
+                                onMouseEnter={() => setSelected(machine.value)}
+                                onClick={() => {
+                                    if (machine.value === 'turning' || machine.value === 'milling') {
+                                        setShowCategories(machine.value);
+                                    }
+                                }}
+                            >
+                                <div className="flex flex-col items-center justify-center min-h-[200px] gap-6 text-center">
+                                    <div
+                                        className={cn(
+                                            'transition-all duration-300 p-3 rounded-full',
+                                            'group-hover:bg-primary/10',
+                                            selected === machine.value ? 'text-primary' : 'text-muted-foreground'
+                                        )}
+                                    >
+                                        <machine.icon className="w-12 h-12" />
+                                    </div>
+                                    <h4
+                                        className={cn(
+                                            'text-lg font-medium transition-colors duration-300',
+                                            selected === machine.value ? 'text-primary' : 'text-foreground'
+                                        )}
+                                    >
+                                        {machine.label}
+                                    </h4>
+                                </div>
+                                <div
+                                    className={cn(
+                                        'absolute inset-0 border-2 border-primary/0 rounded-lg transition-all duration-300',
+                                        'group-hover:border-primary/50'
+                                    )}
+                                />
+                            </Card>
+                        )}
+                    </div>
                 ))}
             </div>
         </div>

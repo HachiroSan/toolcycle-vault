@@ -105,6 +105,7 @@ interface GetItemsParams {
     page?: number;
     limit?: number;
     type?: string;
+    category?: string;
     search?: string;
     sortBy?: string;
     sortDirection?: SortDirection;
@@ -118,6 +119,7 @@ export async function getItemsWithInventory(params?: GetItemsParams): Promise<Pa
     const limit = params?.limit || 10;
     const search = params?.search || '';
     const type = params?.type || '';
+    const category = params?.category || '';
     const sortBy = params?.sortBy || 'name';
     const sortDirection = params?.sortDirection || 'asc';
     const status = params?.status || 'active';
@@ -149,6 +151,10 @@ export async function getItemsWithInventory(params?: GetItemsParams): Promise<Pa
 
         if (type) {
             queries.push(Query.equal('type', type));
+        }
+
+        if (category) {
+            queries.push(Query.equal('category', category));
         }
 
         // Handle dynamic sorting
@@ -253,6 +259,7 @@ export async function createItem(request: CreateItemRequest): Promise<Response<I
         const itemData = {
             name: request.name,
             type: request.type,
+            category: request.category,
             size: request.size,
             length: request.length !== undefined ? Number(request.length) : null,
             brand: request.brand,
@@ -357,6 +364,7 @@ export async function editItemWithInventory(request: EditItemWithInventoryReques
             {
                 name: request.name ?? item.name,
                 type: request.type ?? item.type,
+                category: request.category ?? item.category,
                 size: request.size ?? item.size,
                 length: request.length !== undefined ? Number(request.length) : item.length,
                 brand: request.brand ?? item.brand,
@@ -506,6 +514,71 @@ export async function updateItemImage(itemId: string, imagePublicId: string): Pr
         return {
             success: false,
             message: error instanceof Error ? error.message : 'Failed to update item image',
+        };
+    }
+}
+
+// Migration function to add categories to existing items
+export async function migrateItemCategories(): Promise<Response<{ updated: number; total: number }>> {
+    const cookieStore = await cookies();
+    const sessionCookie = cookieStore.get('session');
+
+    if (!sessionCookie) {
+        return { success: false, message: 'No session cookie found' };
+    }
+
+    try {
+        const { databases } = await createSessionClient(sessionCookie.value);
+        
+        // Get all items without categories
+        const allItems = await databases.listDocuments<BaseItem>(
+            process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!,
+            process.env.NEXT_PUBLIC_APPWRITE_ITEMS_COLLECTION_ID!,
+            [
+                Query.equal('is_deleted', false),
+                Query.limit(1000) // Process in batches if needed
+            ]
+        );
+
+        let updatedCount = 0;
+        const totalItems = allItems.documents.length;
+
+        for (const item of allItems.documents) {
+            // Only update items that don't have a category yet
+            if (!item.category) {
+                let defaultCategory = null;
+                
+                // Set default category based on type
+                if (item.type === 'turning') {
+                    defaultCategory = 'General Turning'; // Default to first category
+                } else if (item.type === 'milling') {
+                    defaultCategory = 'Flat end mill'; // Default to first category
+                }
+                // For 'other' types, leave category as null
+                
+                if (defaultCategory) {
+                    await databases.updateDocument(
+                        process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!,
+                        process.env.NEXT_PUBLIC_APPWRITE_ITEMS_COLLECTION_ID!,
+                        item.$id,
+                        {
+                            category: defaultCategory,
+                        }
+                    );
+                    updatedCount++;
+                }
+            }
+        }
+
+        return {
+            success: true,
+            message: `Migration completed: ${updatedCount} items updated out of ${totalItems} total items`,
+            data: { updated: updatedCount, total: totalItems },
+        };
+    } catch (error) {
+        return {
+            success: false,
+            message: error instanceof Error ? error.message : 'Failed to migrate item categories',
         };
     }
 }

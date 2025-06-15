@@ -10,26 +10,34 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import { createItem } from '@/actions/inventory';
+import { TURNING_CATEGORIES, MILLING_CATEGORIES } from '@/data/inventory.type';
 
 // Define available types as a const array for type safety and reusability
 const ITEM_TYPES = ['turning', 'milling', 'other'] as const;
 type ItemType = (typeof ITEM_TYPES)[number];
 
-// Improved schema with better validation logic
+// Improved schema with better validation logic including category
 const inventoryFormSchema = z
     .object({
         name: z.string().min(2, 'Name must be at least 2 characters'),
         type: z.enum(['turning', 'milling', 'other'] as const),
         customType: z.string().optional(),
+        category: z.string().optional(),
         size: z.string().optional(),
-        length: z.coerce
+        diameter: z.coerce
             .number()
-            .min(0, 'Length must be positive')
-            .max(100, 'Length must not exceed 100cm')
+            .min(0, 'Diameter must be positive')
+            .max(100, 'Diameter must not exceed 100mm')
             .optional()
             .nullable()
             .transform((val) => (val === null ? undefined : val)),
-        brand: z.string().optional(),
+        flute: z.coerce
+            .number()
+            .min(1, 'Flute count must be at least 1')
+            .max(20, 'Flute count must not exceed 20')
+            .optional()
+            .nullable()
+            .transform((val) => (val === null ? undefined : val)),
         coating: z.string().optional(),
         material: z.string().optional(),
         description: z.string().optional(),
@@ -44,6 +52,15 @@ const inventoryFormSchema = z
                 code: z.ZodIssueCode.custom,
                 message: 'Type is required',
                 path: ['customType'],
+            });
+        }
+        
+        // Make category mandatory for turning and milling
+        if ((data.type === 'turning' || data.type === 'milling') && (!data.category || data.category.length === 0)) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Category is required for this machine type',
+                path: ['category'],
             });
         }
     });
@@ -63,9 +80,10 @@ export default function AddInventoryDialog({ isOpen, onClose }: AddInventoryDial
             name: '',
             type: 'turning', // Set a default type
             customType: '',
+            category: '',
             size: '',
-            length: undefined,
-            brand: '',
+            diameter: undefined,
+            flute: undefined,
             coating: '',
             material: '',
             description: '',
@@ -79,6 +97,18 @@ export default function AddInventoryDialog({ isOpen, onClose }: AddInventoryDial
         formState: { isValid, isSubmitting, isDirty },
     } = form;
     const selectedType = watch('type');
+
+    // Get categories based on selected type
+    const getAvailableCategories = (type: ItemType) => {
+        switch (type) {
+            case 'turning':
+                return TURNING_CATEGORIES;
+            case 'milling':
+                return MILLING_CATEGORIES;
+            default:
+                return [];
+        }
+    };
 
     const mutation = useMutation({
         mutationFn: async (values: InventoryFormValues) => {
@@ -166,7 +196,9 @@ export default function AddInventoryDialog({ isOpen, onClose }: AddInventoryDial
                                                 if (value !== 'other') {
                                                     form.setValue('customType', '');
                                                 }
-                                                form.trigger(['type', 'customType']);
+                                                // Clear category when type changes
+                                                form.setValue('category', '');
+                                                form.trigger(['type', 'customType', 'category']);
                                             }}
                                             value={field.value}
                                         >
@@ -211,6 +243,41 @@ export default function AddInventoryDialog({ isOpen, onClose }: AddInventoryDial
                                 />
                             )}
 
+                            {(selectedType === 'turning' || selectedType === 'milling') && (
+                                <FormField
+                                    control={form.control}
+                                    name="category"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>
+                                                Category <span className="text-red-500">*</span>
+                                            </FormLabel>
+                                            <Select
+                                                onValueChange={(value) => {
+                                                    field.onChange(value);
+                                                    form.trigger('category');
+                                                }}
+                                                value={field.value}
+                                            >
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select category" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    {getAvailableCategories(selectedType).map((category) => (
+                                                        <SelectItem key={category} value={category}>
+                                                            {category}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            )}
+
                             <FormField
                                 control={form.control}
                                 name="size"
@@ -225,28 +292,51 @@ export default function AddInventoryDialog({ isOpen, onClose }: AddInventoryDial
                                 )}
                             />
 
-                            <FormField
-                                control={form.control}
-                                name="length"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Length (cm)</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                type="number"
-                                                placeholder="Enter length"
-                                                {...field}
-                                                onChange={(e) => {
-                                                    const value = e.target.value ? Number(e.target.value) : undefined;
-                                                    field.onChange(value);
-                                                    form.trigger('length');
-                                                }}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
+                                        <FormField
+                control={form.control}
+                name="diameter"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Diameter (mm)</FormLabel>
+                        <FormControl>
+                            <Input
+                                type="number"
+                                placeholder="Enter diameter"
+                                {...field}
+                                onChange={(e) => {
+                                    const value = e.target.value ? Number(e.target.value) : undefined;
+                                    field.onChange(value);
+                                    form.trigger('diameter');
+                                }}
                             />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+
+            <FormField
+                control={form.control}
+                name="flute"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Flute Count</FormLabel>
+                        <FormControl>
+                            <Input
+                                type="number"
+                                placeholder="Enter flute count"
+                                {...field}
+                                onChange={(e) => {
+                                    const value = e.target.value ? Number(e.target.value) : undefined;
+                                    field.onChange(value);
+                                    form.trigger('flute');
+                                }}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
 
                             <FormField
                                 control={form.control}
@@ -274,21 +364,7 @@ export default function AddInventoryDialog({ isOpen, onClose }: AddInventoryDial
                                 )}
                             />
 
-                            <FormField
-                                control={form.control}
-                                name="brand"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Brand</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="Enter brand" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
+                                        <FormField
                                 control={form.control}
                                 name="coating"
                                 render={({ field }) => (

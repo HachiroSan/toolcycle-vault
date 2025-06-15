@@ -151,11 +151,11 @@ export default function ReceiptDetailsDialog({ receipt, items, onClose, loading 
                                                         <p className="text-sm text-muted-foreground">
                                                             {item.type}
                                                             {item.size && ` • ${item.size}`}
-                                                            {item.length && ` • ${item.length}mm`}
+                                                            {item.diameter && ` • ⌀${item.diameter}mm`}
                                                         </p>
-                                                        {item.brand && (
+                                                        {item.flute && (
                                                             <p className="text-sm text-muted-foreground">
-                                                                Brand: {item.brand}
+                                                                Flutes: {item.flute}
                                                             </p>
                                                         )}
                                                         {returnCondition?.notes && (

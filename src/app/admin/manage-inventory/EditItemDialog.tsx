@@ -24,29 +24,36 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { TURNING_CATEGORIES, MILLING_CATEGORIES } from '@/data/inventory.type';
 
 // Define available types as a const array for type safety and reusability
 const ITEM_TYPES = ['turning', 'milling', 'other'] as const;
 type ItemType = (typeof ITEM_TYPES)[number];
 
-// Improved schema with better validation logic
 const editFormSchema = z
     .object({
         name: z.string().min(2, 'Name must be at least 2 characters'),
         type: z.enum(['turning', 'milling', 'other'] as const),
         customType: z.string().optional(),
-        size: z.string().nullable().optional(),
-        length: z.coerce
-            .number()
-            .min(0, 'Length must be positive')
-            .max(100, 'Length must not exceed 100cm')
-            .nullable()
-            .optional()
-            .transform((val) => (val === null ? undefined : val)),
-        brand: z.string().nullable().optional(),
-        coating: z.string().nullable().optional(),
-        material: z.string().nullable().optional(),
-        description: z.string().nullable().optional(),
+        category: z.string().optional(),
+        size: z.string().optional(),
+            diameter: z.coerce
+        .number()
+        .min(0, 'Diameter must be positive')
+        .max(100, 'Diameter must not exceed 100mm')
+        .optional()
+        .nullable()
+        .transform((val) => (val === null ? undefined : val)),
+    flute: z.coerce
+        .number()
+        .min(1, 'Flute count must be at least 1')
+        .max(20, 'Flute count must not exceed 20')
+        .optional()
+        .nullable()
+        .transform((val) => (val === null ? undefined : val)),
+        coating: z.string().optional(),
+        material: z.string().optional(),
+        description: z.string().optional(),
         total_quantity: z.coerce
             .number()
             .min(1, 'Quantity must be at least 1')
@@ -60,6 +67,15 @@ const editFormSchema = z
                 path: ['customType'],
             });
         }
+        
+        // Make category mandatory for turning and milling
+        if ((data.type === 'turning' || data.type === 'milling') && (!data.category || data.category.length === 0)) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: 'Category is required for this machine type',
+                path: ['category'],
+            });
+        }
     });
 
 type FormValues = z.infer<typeof editFormSchema>;
@@ -69,9 +85,10 @@ interface EditItemDialogProps {
         $id: string;
         name: string;
         type: string;
+        category?: string | null;
         size?: string | null;
-        length?: number | null;
-        brand?: string | null;
+        diameter?: number | null;
+        flute?: number | null;
         coating?: string | null;
         material?: string | null;
         description?: string | null;
@@ -96,9 +113,10 @@ export default function EditItemDialog({ item, isOpen, onClose }: EditItemDialog
             name: item.name,
             type: initialType as ItemType,
             customType: initialCustomType,
+            category: item.category ?? '',
             size: item.size ?? undefined,
-            length: item.length ?? undefined,
-            brand: item.brand ?? undefined,
+            diameter: item.diameter ?? undefined,
+            flute: item.flute ?? undefined,
             coating: item.coating ?? undefined,
             material: item.material ?? undefined,
             description: item.description ?? undefined,
@@ -112,6 +130,18 @@ export default function EditItemDialog({ item, isOpen, onClose }: EditItemDialog
         formState: { isValid, isSubmitting, isDirty },
     } = form;
     const selectedType = watch('type');
+
+    // Get categories based on selected type
+    const getAvailableCategories = (type: ItemType) => {
+        switch (type) {
+            case 'turning':
+                return TURNING_CATEGORIES;
+            case 'milling':
+                return MILLING_CATEGORIES;
+            default:
+                return [];
+        }
+    };
 
     const handleDelete = () => {
         toast.promise(deleteItemWithInventory(item.$id), {
@@ -216,7 +246,9 @@ export default function EditItemDialog({ item, isOpen, onClose }: EditItemDialog
                                                 if (value !== 'other') {
                                                     form.setValue('customType', '');
                                                 }
-                                                form.trigger(['type', 'customType']);
+                                                // Clear category when type changes
+                                                form.setValue('category', '');
+                                                form.trigger(['type', 'customType', 'category']);
                                             }}
                                             value={field.value}
                                         >
@@ -261,6 +293,41 @@ export default function EditItemDialog({ item, isOpen, onClose }: EditItemDialog
                                 />
                             )}
 
+                            {(selectedType === 'turning' || selectedType === 'milling') && (
+                                <FormField
+                                    control={form.control}
+                                    name="category"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>
+                                                Category <span className="text-red-500">*</span>
+                                            </FormLabel>
+                                            <Select
+                                                onValueChange={(value) => {
+                                                    field.onChange(value);
+                                                    form.trigger('category');
+                                                }}
+                                                value={field.value}
+                                            >
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select category" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    {getAvailableCategories(selectedType).map((category) => (
+                                                        <SelectItem key={category} value={category}>
+                                                            {category}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            )}
+
                             <FormField
                                 control={form.control}
                                 name="size"
@@ -275,28 +342,51 @@ export default function EditItemDialog({ item, isOpen, onClose }: EditItemDialog
                                 )}
                             />
 
-                            <FormField
-                                control={form.control}
-                                name="length"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Length (cm)</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                type="number"
-                                                {...field}
-                                                value={field.value?.toString() ?? ''}
-                                                onChange={(e) => {
-                                                    const value = e.target.value;
-                                                    field.onChange(value === '' ? undefined : Number(value));
-                                                    form.trigger('length');
-                                                }}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
+                                        <FormField
+                control={form.control}
+                name="diameter"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Diameter (mm)</FormLabel>
+                        <FormControl>
+                            <Input
+                                type="number"
+                                {...field}
+                                value={field.value?.toString() ?? ''}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    field.onChange(value === '' ? undefined : Number(value));
+                                    form.trigger('diameter');
+                                }}
                             />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+
+            <FormField
+                control={form.control}
+                name="flute"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Flute Count</FormLabel>
+                        <FormControl>
+                            <Input
+                                type="number"
+                                {...field}
+                                value={field.value?.toString() ?? ''}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    field.onChange(value === '' ? undefined : Number(value));
+                                    form.trigger('flute');
+                                }}
+                            />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
 
                             <FormField
                                 control={form.control}
@@ -321,21 +411,7 @@ export default function EditItemDialog({ item, isOpen, onClose }: EditItemDialog
                                 )}
                             />
 
-                            <FormField
-                                control={form.control}
-                                name="brand"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Brand</FormLabel>
-                                        <FormControl>
-                                            <Input {...field} value={field.value ?? ''} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-
-                            <FormField
+                                        <FormField
                                 control={form.control}
                                 name="coating"
                                 render={({ field }) => (
