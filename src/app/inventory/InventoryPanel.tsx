@@ -94,14 +94,13 @@ export default function InventoryPanel({ type }: { type?: string }) {
     );
 
     useEffect(() => {
+        setPage(1);
         loadItems(true);
-    }, [search, loadItems]);
+    }, [search, type]);
 
     useEffect(() => {
-        if (page > 1) {
-            loadItems();
-        }
-    }, [page, loadItems]);
+        loadItems();
+    }, [page]);
 
     const handleRefresh = () => {
         setIsRefreshing(true);
