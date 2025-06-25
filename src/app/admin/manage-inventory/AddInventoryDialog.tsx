@@ -23,7 +23,13 @@ const inventoryFormSchema = z
         type: z.enum(['turning', 'milling', 'other'] as const),
         customType: z.string().optional(),
         category: z.string().optional(),
-        size: z.string().optional(),
+        length: z.coerce
+            .number()
+            .min(0, 'Length must be positive')
+            .max(1000, 'Length must not exceed 1000mm')
+            .optional()
+            .nullable()
+            .transform((val) => (val === null ? undefined : val)),
         diameter: z.coerce
             .number()
             .min(0, 'Diameter must be positive')
@@ -81,7 +87,7 @@ export default function AddInventoryDialog({ isOpen, onClose }: AddInventoryDial
             type: 'turning', // Set a default type
             customType: '',
             category: '',
-            size: '',
+            length: undefined,
             diameter: undefined,
             flute: undefined,
             coating: '',
@@ -280,12 +286,20 @@ export default function AddInventoryDialog({ isOpen, onClose }: AddInventoryDial
 
                             <FormField
                                 control={form.control}
-                                name="size"
+                                name="length"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Size</FormLabel>
+                                        <FormLabel>Length (mm)</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="Enter size" {...field} />
+                                            <Input 
+                                                type="number" 
+                                                min="0" 
+                                                max="1000" 
+                                                step="0.1"
+                                                placeholder="Enter length in mm"
+                                                {...field} 
+                                                value={field.value ?? ''} 
+                                            />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>

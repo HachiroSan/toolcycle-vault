@@ -74,10 +74,18 @@ export function BorrowItemDetailsDialog({ item, isOpen, onClose }: BorrowItemDet
                         {/* Details Grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-3">
+                                {item.length && (
+                                    <div className="flex items-center gap-2">
+                                        <RulerIcon className="h-4 w-4 text-muted-foreground" />
+                                        <span className="font-medium">Length:</span>
+                                        <span>L{item.length}mm</span>
+                                    </div>
+                                )}
+
                                 <div className="flex items-center gap-2">
                                     <RulerIcon className="h-4 w-4 text-muted-foreground" />
-                                    <span className="font-medium">Length:</span>
-                                    <span>{item.length ? `L${item.length}mm` : '-'}</span>
+                                    <span className="font-medium">Diameter:</span>
+                                    <span>{item.diameter ? `Ø${item.diameter}mm` : '-'}</span>
                                 </div>
 
                                 <div className="flex items-center gap-2">
@@ -94,11 +102,11 @@ export function BorrowItemDetailsDialog({ item, isOpen, onClose }: BorrowItemDet
                                     </div>
                                 )}
 
-                                {item.brand && (
+                                {item.flute && (
                                     <div className="flex items-center gap-2">
                                         <Building2 className="h-4 w-4 text-muted-foreground" />
-                                        <span className="font-medium">Brand:</span>
-                                        <span>{item.brand}</span>
+                                        <span className="font-medium">Flute:</span>
+                                        <span>{item.flute}</span>
                                     </div>
                                 )}
                             </div>

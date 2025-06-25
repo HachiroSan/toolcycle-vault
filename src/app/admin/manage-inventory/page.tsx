@@ -15,5 +15,5 @@ export default function InventoryManagementPage() {
                 <InventoryTable />
             </div>
         </div>
-    );
+    )
 }

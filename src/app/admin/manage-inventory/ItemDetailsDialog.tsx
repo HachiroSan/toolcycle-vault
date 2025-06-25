@@ -45,8 +45,9 @@ export function ItemDetailsDialog({ item, isOpen, onClose }: ItemDetailsDialogPr
                         {/* Details Grid */}
                         <div className="space-y-2">
                             {[
-                                { label: 'Diameter', value: item.diameter ? `⌀${item.diameter}mm` : null },
-                                { label: 'Size', value: item.size },
+                                { label: 'Length', value: item.length ? `L${item.length}mm` : null },
+                                { label: 'Diameter', value: item.diameter ? `Ø${item.diameter}mm` : null },
+                                { label: 'Flute', value: item.flute },
                                 { label: 'Material', value: item.material },
                                 { label: 'Coating', value: item.coating },
                             ].map(

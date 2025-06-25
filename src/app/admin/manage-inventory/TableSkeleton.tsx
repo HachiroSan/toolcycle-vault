@@ -1,7 +1,7 @@
 import React from 'react';
 import { Table, TableBody, TableCell, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Package2, TagIcon, Info, Box, Building2, Paintbrush, RulerIcon } from 'lucide-react';
+import { Package2, TagIcon, Info, Box, Paintbrush, RulerIcon, Layers, GalleryThumbnails, Building2 } from 'lucide-react';
 
 export function TableSkeleton() {
     return (
@@ -11,6 +11,12 @@ export function TableSkeleton() {
                     <TableRow className="bg-muted/50">
                         <TableCell className="w-[40px] text-center">
                             <Skeleton className="h-4 w-4 mx-auto rounded" />
+                        </TableCell>
+                        <TableCell className="w-[50px] text-center">
+                            <div className="flex items-center justify-center space-x-2">
+                                <GalleryThumbnails className="h-4 w-4 text-muted-foreground/70" />
+                                <span className="text-muted-foreground/70">Image</span>
+                            </div>
                         </TableCell>
                         <TableCell className="text-center">
                             <div className="flex items-center justify-center space-x-2">
@@ -26,7 +32,19 @@ export function TableSkeleton() {
                         </TableCell>
                         <TableCell className="text-center">
                             <div className="flex items-center justify-center space-x-2">
-                                <Building2 className="h-4 w-4 text-muted-foreground/70" />
+                                <Layers className="h-4 w-4 text-muted-foreground/70" />
+                                <span className="text-muted-foreground/70">Category</span>
+                            </div>
+                        </TableCell>
+                        <TableCell className="text-center">
+                            <div className="flex items-center justify-center space-x-2">
+                                <RulerIcon className="h-4 w-4 text-muted-foreground/70" />
+                                <span className="text-muted-foreground/70">Length</span>
+                            </div>
+                        </TableCell>
+                        <TableCell className="text-center">
+                            <div className="flex items-center justify-center space-x-2">
+                                <RulerIcon className="h-4 w-4 text-muted-foreground/70" />
                                 <span className="text-muted-foreground/70">Diameter</span>
                             </div>
                         </TableCell>
@@ -38,7 +56,7 @@ export function TableSkeleton() {
                         </TableCell>
                         <TableCell className="text-center">
                             <div className="flex items-center justify-center space-x-2">
-                                <RulerIcon className="h-4 w-4 text-muted-foreground/70" />
+                                <Building2 className="h-4 w-4 text-muted-foreground/70" />
                                 <span className="text-muted-foreground/70">Flute</span>
                             </div>
                         </TableCell>
@@ -65,6 +83,9 @@ export function TableSkeleton() {
                             <TableCell className="w-[40px] text-center">
                                 <Skeleton className="h-4 w-4 mx-auto rounded" />
                             </TableCell>
+                            <TableCell className="w-[50px] p-2">
+                                <Skeleton className="h-12 w-12 mx-auto rounded" />
+                            </TableCell>
                             <TableCell className="text-center">
                                 <Skeleton className="h-4 w-28 mx-auto rounded" />
                             </TableCell>
@@ -72,13 +93,19 @@ export function TableSkeleton() {
                                 <Skeleton className="h-6 w-20 mx-auto rounded-full" />
                             </TableCell>
                             <TableCell className="text-center">
-                                <Skeleton className="h-4 w-24 mx-auto rounded" />
+                                <Skeleton className="h-6 w-16 mx-auto rounded-full" />
                             </TableCell>
                             <TableCell className="text-center">
                                 <Skeleton className="h-4 w-20 mx-auto rounded" />
                             </TableCell>
                             <TableCell className="text-center">
+                                <Skeleton className="h-4 w-24 mx-auto rounded" />
+                            </TableCell>
+                            <TableCell className="text-center">
                                 <Skeleton className="h-4 w-16 mx-auto rounded" />
+                            </TableCell>
+                            <TableCell className="text-center">
+                                <Skeleton className="h-4 w-20 mx-auto rounded" />
                             </TableCell>
                             <TableCell className="text-center">
                                 <div className="flex flex-col space-y-1">

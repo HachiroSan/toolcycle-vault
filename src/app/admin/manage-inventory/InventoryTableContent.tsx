@@ -143,6 +143,12 @@ export function InventoryTableContent({
                         <TableCell className="text-center">
                             <div className="flex items-center justify-center space-x-2">
                                 <RulerIcon className="h-4 w-4 text-muted-foreground" />
+                                <span>Length</span>
+                            </div>
+                        </TableCell>
+                        <TableCell className="text-center">
+                            <div className="flex items-center justify-center space-x-2">
+                                <RulerIcon className="h-4 w-4 text-muted-foreground" />
                                 <span>Diameter</span>
                             </div>
                         </TableCell>
@@ -207,7 +213,10 @@ export function InventoryTableContent({
                                 )}
                             </TableCell>
                             <TableCell className="text-center">
-                                <div className="font-medium">{item.diameter ? `${item.diameter}mm` : '-'}</div>
+                                <div className="font-medium">{item.length ? `L${item.length}mm` : '-'}</div>
+                            </TableCell>
+                            <TableCell className="text-center">
+                                <div className="font-medium">{item.diameter ? `Ø${item.diameter}mm` : '-'}</div>
                             </TableCell>
                             <TableCell className="text-center">
                                 <div className="font-medium">{item.flute || '-'}</div>

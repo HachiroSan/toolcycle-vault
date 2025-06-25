@@ -36,7 +36,13 @@ const editFormSchema = z
         type: z.enum(['turning', 'milling', 'other'] as const),
         customType: z.string().optional(),
         category: z.string().optional(),
-        size: z.string().optional(),
+        length: z.coerce
+            .number()
+            .min(0, 'Length must be positive')
+            .max(1000, 'Length must not exceed 1000mm')
+            .optional()
+            .nullable()
+            .transform((val) => (val === null ? undefined : val)),
             diameter: z.coerce
         .number()
         .min(0, 'Diameter must be positive')
@@ -86,7 +92,7 @@ interface EditItemDialogProps {
         name: string;
         type: string;
         category?: string | null;
-        size?: string | null;
+        length?: number | null;
         diameter?: number | null;
         flute?: number | null;
         coating?: string | null;
@@ -114,7 +120,7 @@ export default function EditItemDialog({ item, isOpen, onClose }: EditItemDialog
             type: initialType as ItemType,
             customType: initialCustomType,
             category: item.category ?? '',
-            size: item.size ?? undefined,
+            length: item.length ?? undefined,
             diameter: item.diameter ?? undefined,
             flute: item.flute ?? undefined,
             coating: item.coating ?? undefined,
@@ -330,12 +336,20 @@ export default function EditItemDialog({ item, isOpen, onClose }: EditItemDialog
 
                             <FormField
                                 control={form.control}
-                                name="size"
+                                name="length"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Size</FormLabel>
+                                        <FormLabel>Length (mm)</FormLabel>
                                         <FormControl>
-                                            <Input {...field} value={field.value ?? ''} />
+                                            <Input 
+                                                type="number" 
+                                                min="0" 
+                                                max="1000" 
+                                                step="0.1"
+                                                placeholder="Enter length in mm"
+                                                {...field} 
+                                                value={field.value ?? ''} 
+                                            />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
