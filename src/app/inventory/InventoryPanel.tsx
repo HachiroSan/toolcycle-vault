@@ -63,10 +63,10 @@ export default function InventoryPanel({ type }: { type?: string }) {
     );
 
     const loadItems = useCallback(
-        async (resetPage = false) => {
+        async (pageToLoad: number, resetPage = false) => {
             try {
                 setIsLoading(true);
-                const currentPage = resetPage ? 1 : page;
+                const currentPage = resetPage ? 1 : pageToLoad;
                 
                 const response = await getItemsWithInventory({
                     page: currentPage,
@@ -95,22 +95,22 @@ export default function InventoryPanel({ type }: { type?: string }) {
                 setIsRefreshing(false);
             }
         },
-        [page, search, type, category]
+        [search, type, category]
     );
 
     useEffect(() => {
         setPage(1);
-        loadItems(true);
-    }, [search, type, category, loadItems]);
+        loadItems(1, true);
+    }, [search, type, category]);
 
     useEffect(() => {
-        loadItems();
-    }, [page, loadItems]);
+        loadItems(page);
+    }, [page]);
 
     const handleRefresh = () => {
         setIsRefreshing(true);
         setInventoryData(undefined);
-        loadItems(true);
+        loadItems(1, true);
     };
 
     const handleViewCart = () => {
